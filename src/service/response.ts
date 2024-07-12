@@ -1,9 +1,17 @@
-import {HandshakeMessage} from "../types/client";
+import {
+    AcceptMessage, FinishMessage,
+    HandshakeMessage,
+    ProgressMessage,
+    RejectMessage,
+    StatusMessage,
+    SyncMessage
+} from "../types/client";
 import systemStatus from "../config/system.status";
 
 /**
- * 服务端需要向客户端发送的数据主要包括：
+ * 服务器向客户端发送消息的句柄类
  * <p>
+ * 服务端需要向客户端发送的数据主要包括：
  * 1. 握手消息：对应数据类型： <code>HandshakeMessage</code>
  *    握手消息主要包括该服务器中服务端的基本信息，在客户端请求连接服务端时由服务端向客户端发送
  * 2. 状态同步消息： 对应数据类型：<code>StatusMessage</code>
@@ -16,12 +24,21 @@ import systemStatus from "../config/system.status";
  *    同步评测进度，由服务端定时发送给客户端
  */
 export class Judge2WebManager {
+    // WebSocket 通讯句柄
     private _ws: any;
 
     constructor(_ws: any) {
         this._ws = _ws;
+
+        // 每 3 分钟向客户端同步服务器状态
+        setInterval(() => {
+            this.statusSync();
+        }, 180_000);
     }
 
+    /**
+     * 握手消息
+     */
     public hello = () => {
         const response: HandshakeMessage = {
             type: "hello",
@@ -31,6 +48,57 @@ export class Judge2WebManager {
             "ext-features": systemStatus["ext-features"]
         };
 
+        this._ws.send(JSON.stringify(response));
+    }
+
+    /**
+     * 服务状态同步消息
+     */
+    public statusSync = () => {
+        const response: StatusMessage = {
+            type: "status",
+            cpus: systemStatus.cpus,
+            occupied: systemStatus.occupied,
+            queue: systemStatus.queue
+        };
+
+        this._ws.send(JSON.stringify(response));
+    }
+
+    /**
+     * 分配任务相应，响应客户端分配任务的请求
+     *
+     * @param type  响应的类型
+     * @param id    相应的任务的 id
+     */
+    public dispatchTask = (type: "accept" | "reject", id: number) => {
+        let response: AcceptMessage | RejectMessage = {
+            type, id
+        };
+
+        this._ws.send(JSON.stringify(response));
+    }
+
+    /**
+     * 文件同步消息
+     *
+     * @param uuid 要获取的文件 uid
+     */
+    public fileSync = (uuid: string) => {
+        const response: SyncMessage = {
+            type: "sync",
+            uuid: uuid
+        };
+
+        this._ws.send(JSON.stringify(response));
+    }
+
+    /**
+     * 评测结果同步
+     *
+     * @param response 评测结果
+     */
+    public judgeSync = (response: ProgressMessage | FinishMessage) => {
         this._ws.send(JSON.stringify(response));
     }
 }
