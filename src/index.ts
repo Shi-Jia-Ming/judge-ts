@@ -2,6 +2,8 @@ import express = require('express');
 import systemConfig from "./config/system.config";
 import * as http from "node:http";
 import {Judge2WebManager} from "./service/response";
+import {JudgeManager} from "./service/judge/judge.manage";
+import {Judge2WebMessage, Web2JudgeMessage} from "./types/client";
 
 const WebSocket = require('ws');
 
@@ -17,8 +19,15 @@ wsInstance.on('connection', (_ws: any) => {
   const responseManager: Judge2WebManager = new Judge2WebManager(_ws);
   responseManager.hello();
 
-  _ws.on('message', (message: any) => {
+  const judgeManager: JudgeManager = new JudgeManager(responseManager);
+
+  _ws.on('message', (message: string) => {
     console.log('收到消息：' + message);
+    const received: Web2JudgeMessage = JSON.parse(message);
+    if (received.type === "task") {
+      const isReceived: boolean = judgeManager.receiveTask(received);
+      console.log("isReceived: ", isReceived);
+    }
   });
 
   _ws.on('close', () => {
