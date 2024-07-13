@@ -27,6 +27,8 @@ wsInstance.on('connection', (_ws: any) => {
     if (received.type === "task") {
       const isReceived: boolean = judgeManager.receiveTask(received);
       console.log("isReceived: ", isReceived);
+    } else if (received.type === "sync") {
+      judgeManager.saveFile(received);
     }
   });
 

@@ -2,7 +2,7 @@ import {ISystemStatus} from "../types/status";
 
 const systemStatus: ISystemStatus = {
     version: "v0",
-    cpus: 16,
+    cpus: 8,
     langs: ["c"],
     "ext-features": [],
     occupied: 0,

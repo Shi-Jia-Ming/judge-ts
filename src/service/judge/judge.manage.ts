@@ -1,4 +1,4 @@
-import {AssignMessage, FinishMessage, ProgressMessage} from "../../types/client";
+import {AssignMessage, FinishMessage, ProgressMessage, SyncResponseMessage} from "../../types/client";
 import systemStatus from "../../config/system.status";
 import {Judge2WebManager} from "../response";
 import {Judge} from "./judge";
@@ -12,6 +12,9 @@ export class JudgeManager {
 
     // 评测机实例列表，长度为 systemStatus.cpus。每一个评测机实例为一个线程
     private judgeInstanceList: Judge[] = [];
+
+    // 文件列表，用于存放从客户端获取的文件内容
+    private fileList: Map<string, string> = new Map();
 
     constructor(response: Judge2WebManager) {
         this.response = response;
@@ -28,6 +31,11 @@ export class JudgeManager {
         //             this.response.judgeSync(judgeInstance.getJudgeStatus());
         //     }
         // }, 3_000);
+    }
+
+    // 存储文件
+    public saveFile = (file: SyncResponseMessage) => {
+        this.fileList.set(file.uuid, file.data);
     }
 
     // 接收评测任务
@@ -77,6 +85,28 @@ export class JudgeManager {
         const running: ProgressMessage = judgeInstance.getJudgeStatus() as ProgressMessage;
         // Compiling -> Running
         this.response.judgeSync(running);
-        // TODO ...
+
+        let subTaskCount = 0;
+        // 从客户端获取评测需要的文件
+        for (let filesKey in task.files) {
+            this.response.fileSync(task.files[filesKey]);
+            subTaskCount++;
+        }
+        judgeInstance.setSubTask(Math.floor(subTaskCount / 2));
+        // await judgeInstance.run(task);
+        new Promise((resolve) => {
+            const timer = setInterval(async () => {
+                await judgeInstance.run(this.fileList, task.files);
+                if (judgeInstance.isAllSubTaskFinished()) {
+                    clearInterval(timer);
+                    resolve(null);      // 执行 then
+                }
+            }, 1000);
+        }).then(() => {
+            console.log('done');
+
+            const done: FinishMessage = judgeInstance.getJudgeStatus() as FinishMessage;
+            this.response.judgeSync(done);
+        });
     }
 }

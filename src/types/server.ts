@@ -87,7 +87,7 @@ enum FileErrorType {
     CollectSizeExceeded = 'CollectSizeExceeded',
 }
 
-interface FileError {
+export interface FileError {
     name: string; // 错误文件名称
     type: FileErrorType; // 错误代码
     message?: string; // 错误信息
