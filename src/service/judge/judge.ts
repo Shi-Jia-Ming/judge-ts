@@ -24,6 +24,8 @@ export class Judge {
     private execFile: string;
     // 还需要执行的子任务数量
     private subTaskNum: number;
+    // 运行的结果
+    private runResult: "Accepted" | "Runtime Error" | "Wrong Answer" | "Time Limit Exceeded" | "Memory Limit Exceeded" | "System Error";
 
     constructor(language: string) {
         this.language = language;
@@ -43,6 +45,8 @@ export class Judge {
             id: -1,
             result: this.judgeResult
         };
+
+        this.runResult = "Accepted";
     }
 
     /**
@@ -137,10 +141,6 @@ export class Judge {
             this.judgeResult.status = "Compile Error"
             this.judgeStatus.type = "finish";
             return false;
-        } else if (output.code === 2) {
-            // 请求评测机错误，系统错误
-            console.error(output.message);
-            return false;
         } else if (output.code === 0) {
             // 编译成功
             this.judgeResult.message = output.message;
@@ -149,17 +149,27 @@ export class Judge {
             return true;
         } else {
             // 系统错误
-            console.error("Unknown compile result: ", output.message);
+            this.judgeResult.message = output.message;
+            this.judgeResult.status = "System Error";
+            this.judgeStatus.type = "progress";
             return false;
         }
     }
 
+    /**
+     * 执行任务2：运行代码
+     *
+     * @param fileList 文件列表，key为uuid，value为文件内容
+     * @param fileDic  文件字典，key为文件名，value为uuid
+     * @return 运行的结果
+     */
     public run = async (fileList: Map<string, string>, fileDic: Record<string, string>): Promise<boolean> => {
         // 验证可执行文件的ID是否为空
         if (this.execFile === '') {
-            console.error("可执行文件的ID为空，检查编译结果是否正常！");
+            console.error("The id of execFile is NULL! Please check if the compile is completed.");
             return false;
         }
+        this.judgeResult.status = "Accepted";
         this.judgeResult.subtasks[this.subTaskNum - 1].status = 'Running';
         this.judgeResult.subtasks[this.subTaskNum - 1].tasks.push({
             message: '',
@@ -181,8 +191,7 @@ export class Judge {
             // 运行文件
             const out: {code: number, output: string, runtime: number, memory: number} = await JudgeCpp.exec(input, this.execFile);
             this.subTaskNum--;
-            console.log(out);
-            // TODO 子任务、测试点直接的关系
+            // TODO 运行时间和内存限制的检测
             if (out.code === 1) {
                 // runtime error
                 this.judgeResult.subtasks[this.subTaskNum].tasks[0].message = out.output;
@@ -194,8 +203,19 @@ export class Judge {
                 console.error("System error while running tasks");
                 return false;
             } else if (out.code === 0) {
-                // run success
-                // TODO 正确答案对比
+                // run success, compare output
+                if (!this.contrast(output, out.output)) {
+                    this.judgeResult.subtasks[this.subTaskNum].status = 'Wrong Answer';
+                    this.judgeResult.subtasks[this.subTaskNum].tasks[0].message = out.output;
+                    this.judgeResult.subtasks[this.subTaskNum].tasks[0].status = 'Wrong Answer';
+                    this.judgeResult.subtasks[this.subTaskNum].tasks[0].time = out.runtime;
+                    this.judgeResult.subtasks[this.subTaskNum].tasks[0].memory = out.memory;
+                    this.judgeResult.status = 'Wrong Answer';
+                    this.runResult = 'Wrong Answer';
+
+                    this.judgeStatus.type = "finish";
+                    return false;
+                }
                 this.judgeResult.subtasks[this.subTaskNum].status = 'Accepted';
                 this.judgeResult.subtasks[this.subTaskNum].tasks[0].message = out.output;
                 this.judgeResult.subtasks[this.subTaskNum].tasks[0].status = 'Accepted';
@@ -204,7 +224,8 @@ export class Judge {
                 this.judgeResult.score++;
 
                 if (this.subTaskNum <= 1) {
-                    this.judgeResult.status = 'Accepted';
+                    this.judgeResult.status = this.runResult;
+                    this.judgeStatus.type = "finish";
                 }
 
                 return true;
@@ -217,7 +238,15 @@ export class Judge {
         return false;
     }
 
+    /**
+     * 执行任务3：对比答案
+     *
+     * @param answer 正确答案
+     * @param output 输出结果
+     * @return 答案是否正确
+     */
     public contrast = (answer: string, output: string) => {
-
+        // TODO 对比答案只是简单的字符串对比，后续可以添加对空格、换行符等的处理
+        return answer === output;
     }
 }
