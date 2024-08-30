@@ -9,7 +9,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - && apt-get
 
 RUN npm config set registry https://mirrors.huaweicloud.com/repository/npm/
 
-RUN git clone -b dev-sjm https://github.com/hitwhoj/judge-ts.git
+RUN git clone -b master https://github.com/hitwhoj/judge-ts.git
 
 RUN cd judge-ts && npm install && npm run build
 
