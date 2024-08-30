@@ -10,3 +10,9 @@ docker build -t judge .
 ```bash
 docker run -it --privileged --name=judge judge
 ```
+
+# Use Automatic Shell
+
+```bash
+sudo proxychains3 ./build.sh
+```

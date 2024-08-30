@@ -1,3 +1,4 @@
+docker stop judge
 docker rm judge
 docker rmi judge
 
