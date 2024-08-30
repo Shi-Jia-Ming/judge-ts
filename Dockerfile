@@ -16,6 +16,8 @@ RUN cd judge-ts && npm install && npm run build
 RUN apt install -y gcc g++
 
 COPY ./start.sh /root/start.sh
+RUN chmod +x ./start.sh
+RUN chmod +x ./go-judge
 
 EXPOSE 5050/tcp 8000/tcp
 
