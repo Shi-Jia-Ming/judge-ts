@@ -11,6 +11,9 @@ export class JudgeChoice {
         else if (compileTask.language === "cpp"){
             return await JudgeCpp.judge(compileTask);
         }
+        else {
+            return {code:1, message:'error type', fileId:''};
+        }
     }
 
     public static chooseExec = async(input:string, execFile:string, language:string):Promise<{
@@ -19,11 +22,12 @@ export class JudgeChoice {
         runtime: number;
         memory: number
     }> => {
-        if(language === "c"){
-            return await JudgeC.exec(input,execFile);
-        }
-        else if (language === "cpp"){
-            return await JudgeCpp.exec(input,execFile);
+        if (language === "c") {
+            return await JudgeC.exec(input, execFile);
+        } else if (language === "cpp") {
+            return await JudgeCpp.exec(input, execFile);
+        } else {
+            return {code: 1, output: '', runtime: 0, memory: 0};
         }
     }
 }

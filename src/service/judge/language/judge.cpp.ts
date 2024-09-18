@@ -8,7 +8,7 @@ export class JudgeCpp {
     public static judge = async (task: DispatchTask): Promise<{code: number; message: string, fileId: string}> => {
         const judgeTask: JudgeRequest = {
             cmd: [{
-                args: ["/usr/bin/g++", "a.cpp", "-o", "a"],
+                args: ["/usr/bin/g++", "code.cpp", "-o", "a"],
                 env: ["PATH=/usr/bin:/bin"],
                 files: [{
                     content: ""
@@ -23,7 +23,7 @@ export class JudgeCpp {
                 memoryLimit: 104857600,
                 procLimit: 50,
                 copyIn: {
-                    "a.cpp": {
+                    "code.cpp": {
                         content: task.code
                     }
                 },
@@ -37,14 +37,14 @@ export class JudgeCpp {
         let fileId: string = '';
         let code: number = 0;
         await axios.post<Result[]>('http://localhost:5050/run', judgeTask).then((response) => {
+            console.log(JSON.stringify(response.data));
             if (response.data[0].files !== undefined && response.data[0].files["stderr"] !== "") {
                 // code error
                 output = response.data[0].files["stderr"];
                 code = 1;
-            }
-            else fileId = response.data[0].fileIds!["a"];
+            } else fileId = response.data[0].fileIds!["a"];
         }).catch((error) => {
-            output = String('Bad request: ' + error.message);
+            output = String('Bad request in compile: ' + error.message);
             code = 2;
         });
 
@@ -109,7 +109,7 @@ export class JudgeCpp {
                 code = 2;
             }
         }).catch((error) => {
-            output = String('Bad request: ' + error.message);
+            output = String('Bad request in exec: ' + error.message);
             code = 2;
         });
 
