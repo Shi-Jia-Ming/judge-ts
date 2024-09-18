@@ -113,7 +113,7 @@ export class JudgeManager {
             const timer = setInterval(async () => {
                 // TODO 错误检测的优化
                 try {
-                    await judgeInstance.run(this.fileList, task.files);
+                    await judgeInstance.run(this.fileList, task.files,task.language);
                 } catch (e) {
                     this.response.judgeSync({
                         type: "finish",

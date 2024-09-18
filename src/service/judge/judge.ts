@@ -7,6 +7,7 @@ import {
     SubtaskResult
 } from "../../types/client";
 import {JudgeCpp} from "./language/judge.cpp";
+import {JudgeChoice} from "./judge.choice";
 
 /**
  * 评测机类
@@ -133,7 +134,7 @@ export class Judge {
             files: task.files
         };
 
-        const output: {code: number, message: string, fileId: string} = await JudgeCpp.judge(compileTask);
+        const output: {code: number, message: string, fileId: string} = await JudgeChoice.chooseJudge(compileTask)
 
         if (output.code === 1) {
             // 编译错误
@@ -163,7 +164,7 @@ export class Judge {
      * @param fileDic  文件字典，key为文件名，value为uuid
      * @return 运行的结果
      */
-    public run = async (fileList: Map<string, string>, fileDic: Record<string, string>): Promise<boolean> => {
+    public run = async (fileList: Map<string, string>, fileDic: Record<string, string>, language:string): Promise<boolean> => {
         // 验证可执行文件的ID是否为空
         if (this.execFile === '') {
             console.error("The id of execFile is NULL! Please check if the compile is completed.");
@@ -189,7 +190,7 @@ export class Judge {
 
         if (input !== undefined && output !== undefined) {
             // 运行文件
-            const out: {code: number, output: string, runtime: number, memory: number} = await JudgeCpp.exec(input, this.execFile);
+            const out: {code: number, output: string, runtime: number, memory: number} = await JudgeChoice.chooseExec(input,this.execFile,language)
             this.subTaskNum--;
             // TODO 运行时间和内存限制的检测
             if (out.code === 1) {
