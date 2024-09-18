@@ -4,19 +4,21 @@ import {Judge} from "./judge";
 import {JudgeC} from "./language/judge.c";
 
 export class JudgeChoice {
-    public static chooseJudge = async(compileTask:DispatchTask):Promise<{code: number, message: string, fileId: string}>=>{
-        if(compileTask.language === "c"){
+    public static chooseJudge = async (compileTask: DispatchTask): Promise<{
+        code: number,
+        message: string,
+        fileId: string
+    }> => {
+        if (compileTask.language === "c") {
             return await JudgeC.judge(compileTask);
-        }
-        else if (compileTask.language === "cpp"){
+        } else if (compileTask.language === "cpp") {
             return await JudgeCpp.judge(compileTask);
-        }
-        else {
-            return {code:1, message:'error type', fileId:''};
+        } else {
+            return {code: 1, message: 'error type', fileId: ''};
         }
     }
 
-    public static chooseExec = async(input:string, execFile:string, language:string):Promise<{
+    public static chooseExec = async (input: string, execFile: string, language: string): Promise<{
         code: number;
         output: string;
         runtime: number;
