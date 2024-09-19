@@ -2,8 +2,12 @@ import {DispatchTask} from "../../types/client";
 import {JudgeCpp} from "./language/judge.cpp";
 import {Judge} from "./judge";
 import {JudgeC} from "./language/judge.c";
+import {JudgePython} from "./language/Judge.python";
 
 export class JudgeChoice {
+
+    private static PythonTask:DispatchTask;
+
     public static chooseJudge = async (compileTask: DispatchTask): Promise<{
         code: number,
         message: string,
@@ -13,6 +17,10 @@ export class JudgeChoice {
             return await JudgeC.judge(compileTask);
         } else if (compileTask.language === "cpp") {
             return await JudgeCpp.judge(compileTask);
+        }else if (compileTask.language === "py"){
+            // return await JudgePython.judge(compileTask);
+            this.PythonTask = compileTask;
+            return {code:0, message:'Python Running!', fileId:'python'};
         } else {
             return {code: 1, message: 'error type', fileId: ''};
         }
@@ -28,6 +36,8 @@ export class JudgeChoice {
             return await JudgeC.exec(input, execFile);
         } else if (language === "cpp") {
             return await JudgeCpp.exec(input, execFile);
+        } else if (language === "py"){
+            return await JudgePython.exec(input,this.PythonTask);
         } else {
             return {code: 1, output: '', runtime: 0, memory: 0};
         }

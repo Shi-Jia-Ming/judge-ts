@@ -49,7 +49,7 @@ export class JudgeC{
             output = String('Bad request in compile: ' + error.message);
             code = 2;
         });
-
+        console.log(fileId)
         return {code:code,message:output,fileId:fileId};
     }
 

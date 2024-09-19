@@ -133,7 +133,6 @@ export class Judge {
             language: task.language,
             files: task.files
         };
-
         const output: {code: number, message: string, fileId: string} = await JudgeChoice.chooseJudge(compileTask)
 
         if (output.code === 1) {
