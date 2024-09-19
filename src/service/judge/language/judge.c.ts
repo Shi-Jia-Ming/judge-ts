@@ -46,7 +46,7 @@ export class JudgeC{
                 fileId = response.data[0].fileIds!["a"];
             }
         }).catch((error) => {
-            output = String('Bad request in compile: ' + error.message);
+            output = String('Bad request: ' + error.message);
             code = 2;
         });
 
@@ -58,7 +58,6 @@ export class JudgeC{
         const execTask: JudgeRequest = {
             cmd:[{
                 // TODO a文件名要保持唯一
-                // TODO 错误检查不充分
                 args:["a"],
                 env:["PATH=/usr/bin:/bin"],
                 files:[{
@@ -110,7 +109,7 @@ export class JudgeC{
                 code = 2;
             }
         }).catch((error) => {
-            output = String('Bad request in exec: ' + error.message);
+            output = String('Bad request: ' + error.message);
             code = 2;
         });
 
