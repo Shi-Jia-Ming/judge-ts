@@ -41,10 +41,9 @@ export class JudgeCpp {
                 // code error
                 output = response.data[0].files["stderr"];
                 code = 1;
-            }
-            else fileId = response.data[0].fileIds!["a"];
+            } else fileId = response.data[0].fileIds!["a"];
         }).catch((error) => {
-            output = String('Bad request: ' + error.message);
+            output = String('Bad request in compile: ' + error.message);
             code = 2;
         });
 
@@ -109,7 +108,7 @@ export class JudgeCpp {
                 code = 2;
             }
         }).catch((error) => {
-            output = String('Bad request: ' + error.message);
+            output = String('Bad request in exec: ' + error.message);
             code = 2;
         });
 
