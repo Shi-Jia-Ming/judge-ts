@@ -1,15 +1,20 @@
-import { DispatchTask } from "../../../types/client";
-import { FileError, JudgeRequest, Result } from "../../../types/server";
+import {DispatchTask} from "../../../types/client";
+import {FileError, JudgeRequest, Result} from "../../../types/server";
 import axios from "axios";
 
 export class JudgePython {
     // 准备并运行 Python 代码
     public static judge = async (): Promise<{ code: number, message: string, fileId: string }> => {
-        return { code: 0, message: "Python Running!", fileId: "Python" };
+        return {code: 0, message: "Python Running!", fileId: "Python"};
     }
 
     // 运行 Python 代码
-    public static exec = async (input: string, task: DispatchTask): Promise<{ code: number, output: string, runtime: number, memory: number }> => {
+    public static exec = async (input: string, task: DispatchTask): Promise<{
+        code: number,
+        output: string,
+        runtime: number,
+        memory: number
+    }> => {
         const execTask: JudgeRequest = {
             cmd: [{
                 args: ["/usr/bin/python3", "a.py"], // 使用 python3 执行 a.py
@@ -68,6 +73,6 @@ export class JudgePython {
             code = 2;
         });
 
-        return { code: code, output: output, runtime: runtime, memory: memory };
+        return {code: code, output: output, runtime: runtime, memory: memory};
     }
 }
