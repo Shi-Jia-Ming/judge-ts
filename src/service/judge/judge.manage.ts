@@ -28,7 +28,7 @@ export class JudgeManager {
         // 根据 cpus 数量创建评测机实例
         for (let i = 0; i < systemStatus.cpus; ++i) {
             // 确保 cpus 大于要评测的语言种类
-            this.judgeInstanceList[i] = new Judge(systemStatus.langs[i / systemStatus.langs.length]);
+            this.judgeInstanceList[i] = new Judge(systemStatus.langs[i % systemStatus.langs.length]);
         }
     }
 

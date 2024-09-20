@@ -3,6 +3,7 @@ import {JudgeCpp} from "./language/judge.cpp";
 import {Judge} from "./judge";
 import {JudgeC} from "./language/judge.c";
 import {JudgePython} from "./language/judge.python";
+import {JudgeJava} from "./language/judge.java";
 
 export class JudgeChoice {
 
@@ -18,6 +19,8 @@ export class JudgeChoice {
         } else if (compileTask.language === "py") {
             // return await JudgePython.judge(compileTask);
             return await JudgePython.judge();
+        } else if (compileTask.language === "java"){
+            return await JudgeJava.judge(compileTask);
         } else {
             return {code: 1, message: 'error type', fileId: ''};
         }
@@ -35,7 +38,9 @@ export class JudgeChoice {
             return await JudgeCpp.exec(input, execFile);
         } else if (task.language === "py") {
             return await JudgePython.exec(input, task);
-        } else {
+        } else if (task.language === "java"){
+            return await JudgeJava.exec(input,execFile);
+        }else {
             return {code: 1, output: '', runtime: 0, memory: 0};
         }
     }
