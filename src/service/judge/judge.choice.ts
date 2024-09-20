@@ -2,13 +2,13 @@ import {DispatchTask} from "../../types/client";
 import {JudgeCpp} from "./language/judge.cpp";
 import {Judge} from "./judge";
 import {JudgeC} from "./language/judge.c";
-import {JudgePython} from "./language/Judge.python";
+import {JudgePython} from "./language/judge.python";
 
 export class JudgeChoice {
 
-    private static PythonTask:DispatchTask;
+    private  pythonTask:DispatchTask;
 
-    public static chooseJudge = async (compileTask: DispatchTask): Promise<{
+    public  chooseJudge = async (compileTask: DispatchTask): Promise<{
         code: number,
         message: string,
         fileId: string
@@ -19,14 +19,14 @@ export class JudgeChoice {
             return await JudgeCpp.judge(compileTask);
         }else if (compileTask.language === "py"){
             // return await JudgePython.judge(compileTask);
-            this.PythonTask = compileTask;
-            return {code:0, message:'Python Running!', fileId:'python'};
+            this.pythonTask = compileTask;
+            return await JudgePython.judge();
         } else {
             return {code: 1, message: 'error type', fileId: ''};
         }
     }
 
-    public static chooseExec = async (input: string, execFile: string, language: string): Promise<{
+    public  chooseExec = async (input: string, execFile: string, language: string): Promise<{
         code: number;
         output: string;
         runtime: number;
@@ -37,7 +37,7 @@ export class JudgeChoice {
         } else if (language === "cpp") {
             return await JudgeCpp.exec(input, execFile);
         } else if (language === "py"){
-            return await JudgePython.exec(input,this.PythonTask);
+            return await JudgePython.exec(input,this.pythonTask);
         } else {
             return {code: 1, output: '', runtime: 0, memory: 0};
         }

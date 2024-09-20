@@ -133,7 +133,7 @@ export class Judge {
             language: task.language,
             files: task.files
         };
-        const output: {code: number, message: string, fileId: string} = await JudgeChoice.chooseJudge(compileTask)
+        const output: {code: number, message: string, fileId: string} = await new JudgeChoice().chooseJudge(compileTask)
 
         if (output.code === 1) {
             // 编译错误
@@ -189,7 +189,7 @@ export class Judge {
 
         if (input !== undefined && output !== undefined) {
             // 运行文件
-            const out: {code: number, output: string, runtime: number, memory: number} = await JudgeChoice.chooseExec(input,this.execFile,language)
+            const out: {code: number, output: string, runtime: number, memory: number} = await new JudgeChoice().chooseExec(input,this.execFile,language)
             this.subTaskNum--;
             // TODO 运行时间和内存限制的检测
             if (out.code === 1) {
