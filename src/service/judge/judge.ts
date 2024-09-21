@@ -133,7 +133,6 @@ export class Judge {
             language: task.language,
             files: task.files
         };
-
         const output: {code: number, message: string, fileId: string} = await JudgeChoice.chooseJudge(compileTask)
 
         if (output.code === 1) {
@@ -161,10 +160,11 @@ export class Judge {
      * 执行任务2：运行代码
      *
      * @param fileList 文件列表，key为uuid，value为文件内容
-     * @param fileDic  文件字典，key为文件名，value为uuid
+     * @param task
      * @return 运行的结果
      */
-    public run = async (fileList: Map<string, string>, fileDic: Record<string, string>, language:string): Promise<boolean> => {
+    public run = async (fileList: Map<string, string>, task: AssignMessage): Promise<boolean> => {
+        const fileDic = task.files;
         // 验证可执行文件的ID是否为空
         if (this.execFile === '') {
             console.error("The id of execFile is NULL! Please check if the compile is completed.");
@@ -190,7 +190,7 @@ export class Judge {
 
         if (input !== undefined && output !== undefined) {
             // 运行文件
-            const out: {code: number, output: string, runtime: number, memory: number} = await JudgeChoice.chooseExec(input,this.execFile,language)
+            const out: {code: number, output: string, runtime: number, memory: number} = await JudgeChoice.chooseExec(input,this.execFile,task)
             this.subTaskNum--;
             // TODO 运行时间和内存限制的检测
             if (out.code === 1) {

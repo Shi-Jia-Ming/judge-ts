@@ -28,7 +28,7 @@ export class JudgeManager {
         // 根据 cpus 数量创建评测机实例
         for (let i = 0; i < systemStatus.cpus; ++i) {
             // 确保 cpus 大于要评测的语言种类
-            this.judgeInstanceList[i] = new Judge(systemStatus.langs[i / systemStatus.langs.length]);
+            this.judgeInstanceList[i] = new Judge(systemStatus.langs[i % systemStatus.langs.length]);
         }
     }
 
@@ -113,7 +113,7 @@ export class JudgeManager {
             const timer = setInterval(async () => {
                 // TODO 错误检测的优化
                 try {
-                    await judgeInstance.run(this.fileList, task.files,task.language);
+                    await judgeInstance.run(this.fileList, task);
                 } catch (e) {
                     this.response.judgeSync({
                         type: "finish",
