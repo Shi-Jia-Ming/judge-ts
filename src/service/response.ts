@@ -1,11 +1,11 @@
 import {
-    AcceptMessage,
-    FinishMessage,
-    HandshakeMessage,
-    ProgressMessage,
-    RejectMessage,
-    StatusMessage,
-    SyncMessage
+  AcceptMessage,
+  FinishMessage,
+  HandshakeMessage,
+  ProgressMessage,
+  RejectMessage,
+  StatusMessage,
+  SyncMessage
 } from "../types/client";
 import systemStatus from "../config/system.status";
 
