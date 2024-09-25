@@ -1,4 +1,4 @@
-import { ISystemConfig } from "../types/config";
+import {ISystemConfig} from "../types/config";
 
 const systemConfig: ISystemConfig = {
   port: 8000,

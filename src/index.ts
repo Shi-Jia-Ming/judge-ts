@@ -7,12 +7,12 @@ import {Web2JudgeMessage} from "./types/client";
 
 const WebSocket = require('ws');
 
-const app =express();
+const app = express();
 
 const server = http.createServer(app);
 
 // 创建 WebSocket 实例
-const wsInstance = new WebSocket.Server({ server });
+const wsInstance = new WebSocket.Server({server});
 
 wsInstance.on('connection', (_ws: any) => {
   console.log("Client connected!");
