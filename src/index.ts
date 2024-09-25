@@ -5,7 +5,7 @@ import {Judge2WebManager} from "./service/response";
 import {JudgeManager} from "./service/judge/judge.manage";
 import {Web2JudgeMessage} from "./types/client";
 
-const WebSocket = require('ws');
+import WebSocket from 'ws';
 
 const app = express();
 
