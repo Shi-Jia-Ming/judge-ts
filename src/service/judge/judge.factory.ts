@@ -3,7 +3,7 @@ import {JudgeCpp} from "./language/judge.cpp";
 import {Judge} from "./judge";
 import {JudgeC} from "./language/judge.c";
 
-export class JudgeChoice {
+export class JudgeFactory {
     public static chooseJudge = async (compileTask: DispatchTask): Promise<{
         code: number,
         message: string,

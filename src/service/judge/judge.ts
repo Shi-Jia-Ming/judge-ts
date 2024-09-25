@@ -7,7 +7,7 @@ import {
     SubtaskResult
 } from "../../types/client";
 import {JudgeCpp} from "./language/judge.cpp";
-import {JudgeChoice} from "./judge.choice";
+import {JudgeFactory} from "./judge.factory";
 
 /**
  * 评测机类
@@ -134,7 +134,7 @@ export class Judge {
             files: task.files
         };
 
-        const output: {code: number, message: string, fileId: string} = await JudgeChoice.chooseJudge(compileTask)
+        const output: {code: number, message: string, fileId: string} = await JudgeFactory.chooseJudge(compileTask)
 
         if (output.code === 1) {
             // 编译错误
@@ -190,7 +190,7 @@ export class Judge {
 
         if (input !== undefined && output !== undefined) {
             // 运行文件
-            const out: {code: number, output: string, runtime: number, memory: number} = await JudgeChoice.chooseExec(input,this.execFile,language)
+            const out: {code: number, output: string, runtime: number, memory: number} = await JudgeFactory.chooseExec(input,this.execFile,language)
             this.subTaskNum--;
             // TODO 运行时间和内存限制的检测
             if (out.code === 1) {
