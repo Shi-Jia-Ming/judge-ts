@@ -149,28 +149,28 @@ export class Judge {
     }
   }
 
-  /**
-   * 执行任务2：运行代码
-   *
-   * @param fileList 文件列表，key为uuid，value为文件内容
-   * @param fileDic  文件字典，key为文件名，value为uuid
-   * @param language 语言
-   * @return 运行的结果
-   */
-  public run = async (fileList: Map<string, string>, fileDic: Record<string, string>, language: string): Promise<boolean> => {
-    // 验证可执行文件的ID是否为空
-    if (this.execFile === '') {
-      console.error("The id of execFile is NULL! Please check if the compile is completed.");
-      return false;
-    }
-    this.judgeResult.status = "Accepted";
-    this.judgeResult.subtasks[this.subTaskNum - 1].status = 'Running';
-    this.judgeResult.subtasks[this.subTaskNum - 1].tasks.push({
-      message: '',
-      status: 'Running',
-      time: 0,
-      memory: 0
-    });
+    /**
+     * 执行任务2：运行代码
+     *
+     * @param fileList 文件列表，key为uuid，value为文件内容
+     * @param task
+     * @return 运行的结果
+     */
+    public run = async (fileList: Map<string, string>, task: AssignMessage): Promise<boolean> => {
+        const fileDic = task.files;
+        // 验证可执行文件的ID是否为空
+        if (this.execFile === '') {
+            console.error("The id of execFile is NULL! Please check if the compile is completed.");
+            return false;
+        }
+        this.judgeResult.status = "Accepted";
+        this.judgeResult.subtasks[this.subTaskNum - 1].status = 'Running';
+        this.judgeResult.subtasks[this.subTaskNum - 1].tasks.push({
+            message: '',
+            status: 'Running',
+            time: 0,
+            memory: 0
+        });
 
     // 获取输入文件和输出文件 TODO 通过字符串拼接的方式拼接文件内容
     const inputFileName: string = this.subTaskNum.toString() + '.in';
@@ -181,36 +181,31 @@ export class Judge {
     const input: string | undefined = fileList.get(inputFileUuid);
     const output: string | undefined = fileList.get(outputFileUuid);
 
-    if (input !== undefined && output !== undefined) {
-      // 运行文件
-      const out: {
-        code: number,
-        output: string,
-        runtime: number,
-        memory: number
-      } = await JudgeFactory.chooseExec(input, this.execFile, language)
-      this.subTaskNum--;
-      // TODO 运行时间和内存限制的检测
-      if (out.code === 1) {
-        // runtime error
-        this.judgeResult.subtasks[this.subTaskNum].tasks[0].message = out.output;
-        this.judgeResult.subtasks[this.subTaskNum].tasks[0].status = 'Runtime Error';
-        this.judgeResult.subtasks[this.subTaskNum].tasks[0].time = out.runtime;
-        this.judgeResult.subtasks[this.subTaskNum].tasks[0].memory = out.memory;
-        return false;
-      } else if (out.code === 2) {
-        console.error("System error while running tasks");
-        return false;
-      } else if (out.code === 0) {
-        // run success, compare output
-        if (!this.contrast(output, out.output)) {
-          this.judgeResult.subtasks[this.subTaskNum].status = 'Wrong Answer';
-          this.judgeResult.subtasks[this.subTaskNum].tasks[0].message = out.output;
-          this.judgeResult.subtasks[this.subTaskNum].tasks[0].status = 'Wrong Answer';
-          this.judgeResult.subtasks[this.subTaskNum].tasks[0].time = out.runtime;
-          this.judgeResult.subtasks[this.subTaskNum].tasks[0].memory = out.memory;
-          this.judgeResult.status = 'Wrong Answer';
-          this.runResult = 'Wrong Answer';
+        if (input !== undefined && output !== undefined) {
+            // 运行文件
+            const out: {code: number, output: string, runtime: number, memory: number} = await JudgeFactory.chooseExec(input, this.execFile, task)
+            this.subTaskNum--;
+            // TODO 运行时间和内存限制的检测
+            if (out.code === 1) {
+                // runtime error
+                this.judgeResult.subtasks[this.subTaskNum].tasks[0].message = out.output;
+                this.judgeResult.subtasks[this.subTaskNum].tasks[0].status = 'Runtime Error';
+                this.judgeResult.subtasks[this.subTaskNum].tasks[0].time = out.runtime;
+                this.judgeResult.subtasks[this.subTaskNum].tasks[0].memory = out.memory;
+                return false;
+            } else if (out.code === 2) {
+                console.error("System error while running tasks");
+                return false;
+            } else if (out.code === 0) {
+                // run success, compare output
+                if (!this.contrast(output, out.output)) {
+                    this.judgeResult.subtasks[this.subTaskNum].status = 'Wrong Answer';
+                    this.judgeResult.subtasks[this.subTaskNum].tasks[0].message = out.output;
+                    this.judgeResult.subtasks[this.subTaskNum].tasks[0].status = 'Wrong Answer';
+                    this.judgeResult.subtasks[this.subTaskNum].tasks[0].time = out.runtime;
+                    this.judgeResult.subtasks[this.subTaskNum].tasks[0].memory = out.memory;
+                    this.judgeResult.status = 'Wrong Answer';
+                    this.runResult = 'Wrong Answer';
 
           this.judgeStatus.type = "finish";
           return false;
