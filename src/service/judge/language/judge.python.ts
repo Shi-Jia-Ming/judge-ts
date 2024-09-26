@@ -69,7 +69,10 @@ export class JudgePython {
         code = 2;
       }
     }).catch((error) => {
-      output = String('Bad request in exec: ' + error.message);
+      if (process.env.RUNNING_LEVEL === "debug") {
+        console.error("[judge python]", "bad request in execute:", error.message);
+      }
+      output = "";
       code = 2;
     });
 

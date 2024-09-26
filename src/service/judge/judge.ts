@@ -126,7 +126,7 @@ export class Judge {
       files: task.files
     };
 
-    const output: { code: number, message: string, fileId: string } = await JudgeFactory.chooseJudge(compileTask)
+    const output: { code: number, message: string, fileId: string } = await JudgeFactory.judge(compileTask);
 
     if (output.code === 1) {
       // 编译错误
@@ -188,7 +188,7 @@ export class Judge {
         output: string,
         runtime: number,
         memory: number
-      } = await JudgeFactory.chooseExec(input, this.execFile, task)
+      } = await JudgeFactory.exec(input, this.execFile, task)
       this.subTaskNum--;
       // TODO 运行时间和内存限制的检测
       if (out.code === 1) {

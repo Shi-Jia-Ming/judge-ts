@@ -4,6 +4,9 @@ import * as http from "node:http";
 import {Judge2WebManager} from "./service/response";
 import {JudgeManager} from "./service/judge/judge.manage";
 import {Web2JudgeMessage} from "./types/client";
+import "dotenv/config";
+
+require('dotenv').config();
 
 import WebSocket from 'ws';
 
@@ -15,7 +18,9 @@ const server = http.createServer(app);
 const wsInstance = new WebSocket.Server({server});
 
 wsInstance.on('connection', (_ws: any) => {
-  console.log("Client connected!");
+  if (process.env.RUNNING_LEVEL === "debug") {
+    console.log("[websocket]", "client connected!");
+  }
 
   const responseManager: Judge2WebManager = new Judge2WebManager(_ws);
   responseManager.hello();
@@ -23,22 +28,26 @@ wsInstance.on('connection', (_ws: any) => {
   const judgeManager: JudgeManager = new JudgeManager(responseManager);
 
   _ws.on('message', (message: string) => {
-    console.log('Received message：' + message);
-
     const received: Web2JudgeMessage = JSON.parse(message);
+
+    if (process.env.RUNNING_LEVEL === "debug") {
+      console.log("[websocket]", "received message. type:" + received.type);
+    }
+
     if (received.type === "task") {
       const isReceived: boolean = judgeManager.receiveTask(received);
-      console.log("Is task received: ", isReceived);
     } else if (received.type === "sync") {
       judgeManager.saveFile(received);
     }
   });
 
   _ws.on('close', () => {
-    console.log("Client closed!");
+    if (process.env.RUNNING_LEVEL === "debug") {
+      console.log("[websocket]", "client closed!");
+    }
   });
 });
 
 server.listen(systemConfig.port, () => {
-  console.log(`the server is start at port ${systemConfig.port}`);
+  console.log("[websocket]", `the server is start at port ${systemConfig.port}`);
 });

@@ -44,7 +44,10 @@ export class JudgeC {
         fileId = response.data[0].fileIds!["a"];
       }
     }).catch((error) => {
-      output = String('Bad request in compile: ' + error.message);
+      if (process.env.RUNNING_LEVEL === "debug") {
+        console.error("[judge c]", "bad request in compile:", error.message);
+      }
+      output = "";
       code = 2;
     });
 
@@ -112,7 +115,10 @@ export class JudgeC {
         code = 2;
       }
     }).catch((error) => {
-      output = String('Bad request in exec: ' + error.message);
+      if (process.env.RUNNING_LEVEL === "debug") {
+        console.error("[judge c]", "bad request in execute:", error.message);
+      }
+      output = "";
       code = 2;
     });
 
