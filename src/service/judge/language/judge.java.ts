@@ -40,7 +40,10 @@ export class JudgeJava {
         code = 1;
       } else fileId = response.data[0].fileIds!["Main.class"];
     }).catch((error) => {
-      output = String('Bad request in compile: ' + error.message);
+      if (process.env.RUNNING_LEVEL === "debug") {
+        console.error("[judge java]", "bad request in compile:", error.message);
+      }
+      output = "";
       code = 2;
     });
 
@@ -105,14 +108,18 @@ export class JudgeJava {
         runtime = response.data[0].time;
         memory = response.data[0].memory;
       } else {
+        output = "";
         console.error("Unknown error!");
         code = 2;
       }
     }).catch((error) => {
-      output = String('Bad request in exec: ' + error.message);
+      if (process.env.RUNNING_LEVEL === "debug") {
+        console.error("[judge java]", "bad request in execute:", error.message);
+      }
+      output = "";
       code = 2;
     });
 
-    return {code: code, output: output, runtime: runtime, memory: memory};
+    return {code: code, output: output, runtime: Math.round(runtime / 1000), memory: Math.round(memory / 1024)};
   }
 }

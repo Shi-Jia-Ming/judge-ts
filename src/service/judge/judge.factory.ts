@@ -5,7 +5,8 @@ import {JudgePython} from "./language/judge.python";
 import {JudgeJava} from "./language/judge.java";
 
 export class JudgeFactory {
-  public static chooseJudge = async (compileTask: DispatchTask): Promise<{
+
+  public static judge = async (compileTask: DispatchTask): Promise<{
     code: number,
     message: string,
     fileId: string
@@ -19,7 +20,7 @@ export class JudgeFactory {
     }
   }
 
-  public static chooseExec = async (input: string, execFile: string, task: AssignMessage): Promise<{
+  public static exec = async (input: string, execFile: string, task: AssignMessage): Promise<{
     code: number;
     output: string;
     runtime: number;
