@@ -1,4 +1,11 @@
-import {AssignMessage, DispatchTask, FinishMessage, JudgeResult, ProgressMessage,} from "../../types/client";
+import {
+  AssignMessage,
+  ConfigJson, ConfigSubtask, ConfigTaskDefault,
+  DispatchTask,
+  FinishMessage,
+  JudgeResult,
+  ProgressMessage, SubtaskResult, TaskResult,
+} from "../../types/client";
 import {JudgeFactory} from "./judge.factory";
 
 /**
@@ -15,16 +22,15 @@ export class Judge {
   private readonly judgeStatus: FinishMessage | ProgressMessage;
   // 可执行文件的id
   private execFile: string;
-  // 还需要执行的子任务数量
-  private subTaskNum: number;
-  // 运行的结果
-  private runResult: "Accepted" | "Runtime Error" | "Wrong Answer" | "Time Limit Exceeded" | "Memory Limit Exceeded" | "System Error";
+  // 评测任务的配置文件
+  private config: ConfigJson | undefined;
+  // 子任务
+  private subTask: ConfigSubtask<ConfigTaskDefault>[] = [];
 
   constructor(language: string) {
     this.language = language;
     this.execFile = '';
     this.occupied = false;
-    this.subTaskNum = 0;
 
     this.judgeResult = {
       message: '',
@@ -34,12 +40,11 @@ export class Judge {
     };
 
     this.judgeStatus = {
-      type: "finish",
+      type: "progress",
       id: -1,
       result: this.judgeResult
     };
 
-    this.runResult = "Accepted";
   }
 
   /**
@@ -60,7 +65,20 @@ export class Judge {
    * 评测机是否运行所有的子任务
    */
   public isAllSubTaskFinished = (): boolean => {
-    return this.subTaskNum <= 0;
+    if (this.subTask.length <= 0) {
+      if (this.judgeResult.status === "Running") {
+        this.judgeResult.status = "Accepted";
+      }
+      this.judgeStatus.type = "finish";
+    }
+    return this.subTask.length <= 0;
+  }
+
+  /**
+   * 评测机是否完成配置
+   */
+  public isConfigured = (): boolean => {
+    return this.config !== undefined;
   }
 
   /**
@@ -77,20 +95,17 @@ export class Judge {
   }
 
   /**
-   * 设置子任务
-   *
-   * @param count 子任务的数量
+   * 设置评测机的配置文件
    */
-  public setSubTask = (count: number) => {
-    for (let i = 0; i < count; ++i) {
-      this.judgeResult.subtasks.push({
-        message: '',
-        status: 'Pending',
-        score: 0,
-        tasks: []
-      });
+  public configure = (configJson: string) => {
+    this.config = JSON.parse(configJson) as ConfigJson;
+    if (this.config.type == "default") {
+      this.subTask = this.config.subtasks;
+    } else {
+      if (process.env.RUNNING_LEVEL === "debug") {
+        console.error("[judge]", "unsupported config type");
+      }
     }
-    this.subTaskNum = count;
   }
 
   /**
@@ -157,82 +172,99 @@ export class Judge {
    * @return 运行的结果
    */
   public run = async (fileList: Map<string, string>, task: AssignMessage): Promise<boolean> => {
-    const fileDic = task.files;
-    // 验证可执行文件的ID是否为空
-    if (this.execFile === '') {
-      console.error("The id of execFile is NULL! Please check if the compile is completed.");
-      return false;
+    const subtask = this.subTask[0];
+    for (let i = 0; i < subtask.cases.length; ++i) {
+      if (!(fileList.has(task.files[subtask.cases[i].input]) && fileList.has(task.files[subtask.cases[i].output]))) {
+        return false;
+      }
     }
-    this.judgeResult.status = "Accepted";
-    this.judgeResult.subtasks[this.subTaskNum - 1].status = 'Running';
-    this.judgeResult.subtasks[this.subTaskNum - 1].tasks.push({
+
+    // 计算每一个测试点得分
+    const singleScore = subtask.score / subtask.cases.length;
+    // 初始化子任务运行结果
+    const subtaskResult: SubtaskResult = {
       message: '',
-      status: 'Running',
-      time: 0,
-      memory: 0
-    });
+      status: "Running",
+      score: 0,
+      tasks: []
+    };
 
-    // 获取输入文件和输出文件 TODO 通过字符串拼接的方式拼接文件内容
-    const inputFileName: string = this.subTaskNum.toString() + '.in';
-    const outputFileName: string = this.subTaskNum.toString() + '.out';
-    const inputFileUuid: string = fileDic[inputFileName];
-    const outputFileUuid: string = fileDic[outputFileName];
-    // 如果fileList中没有uuid说明还没有从客户端加载
-    const input: string | undefined = fileList.get(inputFileUuid);
-    const output: string | undefined = fileList.get(outputFileUuid);
+    // 输入文件和输出文件都存在，开始运行
+    for (let i = 0; i < subtask.cases.length; ++i) {
+      const input: string = fileList.get(task.files[subtask.cases[i].input]) as string;
+      const output: string = fileList.get(task.files[subtask.cases[i].output]) as string;
 
-    if (input !== undefined && output !== undefined) {
-      // 运行文件
-      const out: {
+      const result: {
         code: number,
         output: string,
         runtime: number,
         memory: number
-      } = await JudgeFactory.exec(input, this.execFile, task)
-      this.subTaskNum--;
-      // TODO 运行时间和内存限制的检测
-      if (out.code === 1) {
+      } = await JudgeFactory.exec(input, this.execFile, task);
+
+      const caseResult: TaskResult = {
+        message: result.output,
+        status: "Running",
+        time: result.runtime,
+        /** 内存使用量，单位为 byte，如果没有结果则为 -1 */
+        memory: result.memory,
+      };
+
+      // 检查内存和时间限制
+      if (this.config?.type === "default" && this.config?.time && result.runtime > this.config?.time) {
+        caseResult.status = "Time Limit Exceeded";
+        subtaskResult.status = "Time Limit Exceeded";
+        this.judgeResult.status = "Time Limit Exceeded";
+      } else if (this.config?.type === "default" && this.config?.memory && result.memory > this.config?.memory) {
+        caseResult.status = "Memory Limit Exceeded";
+        subtaskResult.status = "Memory Limit Exceeded";
+        this.judgeResult.status = "Memory Limit Exceeded";
+      } else if (result.code === 1) {
         // runtime error
-        this.judgeResult.subtasks[this.subTaskNum].tasks[0].message = out.output;
-        this.judgeResult.subtasks[this.subTaskNum].tasks[0].status = 'Runtime Error';
-        this.judgeResult.subtasks[this.subTaskNum].tasks[0].time = out.runtime;
-        this.judgeResult.subtasks[this.subTaskNum].tasks[0].memory = out.memory;
-        return false;
-      } else if (out.code === 2) {
-        console.error("System error while running tasks");
-        return false;
-      } else if (out.code === 0) {
+        caseResult.status = "Runtime Error";
+        subtaskResult.status = "Runtime Error";
+        this.judgeResult.status = "Runtime Error";
+      } else if (result.code === 2) {
+        if (process.env.RUNNING_LEVEL === "debug") {
+          console.error("[judge]", "system error while running cases");
+        }
+        // system error
+        caseResult.status = "System Error";
+        subtaskResult.status = "System Error";
+        this.judgeResult.status = "System Error";
+      } else if (result.code === 0) {
         // run success, compare output
-        if (!this.contrast(output, out.output)) {
-          this.judgeResult.subtasks[this.subTaskNum].status = 'Wrong Answer';
-          this.judgeResult.subtasks[this.subTaskNum].tasks[0].message = out.output;
-          this.judgeResult.subtasks[this.subTaskNum].tasks[0].status = 'Wrong Answer';
-          this.judgeResult.subtasks[this.subTaskNum].tasks[0].time = out.runtime;
-          this.judgeResult.subtasks[this.subTaskNum].tasks[0].memory = out.memory;
-          this.judgeResult.status = 'Wrong Answer';
-          this.runResult = 'Wrong Answer';
-
-          this.judgeStatus.type = "finish";
-          return false;
+        if (!this.contrast(output, result.output)) {
+          caseResult.status = "Wrong Answer";
+          subtaskResult.status = "Wrong Answer";
+          this.judgeResult.status = "Wrong Answer";
+        } else {
+          caseResult.status = "Accepted";
+          subtaskResult.score += singleScore;
         }
-        this.judgeResult.subtasks[this.subTaskNum].status = 'Accepted';
-        this.judgeResult.subtasks[this.subTaskNum].tasks[0].message = out.output;
-        this.judgeResult.subtasks[this.subTaskNum].tasks[0].status = 'Accepted';
-        this.judgeResult.subtasks[this.subTaskNum].tasks[0].time = out.runtime;
-        this.judgeResult.subtasks[this.subTaskNum].tasks[0].memory = out.memory;
-        this.judgeResult.score++;
-
-        if (this.subTaskNum <= 1) {
-          this.judgeResult.status = this.runResult;
-          this.judgeStatus.type = "finish";
+      } else {
+        // unknown error
+        caseResult.status = "System Error";
+        subtaskResult.status = "System Error";
+        this.judgeResult.status = "System Error";
+        if (process.env.RUNNING_LEVEL === "debug") {
+          console.error("[judge]", "unknown error while running cases");
         }
-
-        return true;
       }
 
-    } else {
-      console.error("Can not load file from fileMap.");
+      subtaskResult.tasks.push(caseResult);
+      fileList.delete(task.files[subtask.cases[i].input]);
+      fileList.delete(task.files[subtask.cases[i].output]);
     }
+
+    if (subtaskResult.status === "Running") {
+      subtaskResult.status = "Accepted";
+    }
+
+    this.judgeResult.subtasks.push(subtaskResult);
+    this.judgeResult.score += subtaskResult.score;
+
+    // 删除第一个
+    this.subTask.shift();
 
     return false;
   }

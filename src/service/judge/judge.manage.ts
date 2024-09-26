@@ -42,7 +42,7 @@ export class JudgeManager {
       return false;
     }
     // 接取任务
-    for (const judgeInstance of this.judgeInstanceList) {
+    for (const judgeInstance of this.judgeInstanceList.filter((judgeInstance) => !judgeInstance.isOccupied())) {
       if (judgeInstance.receive(task)) {
         // 占用的评测机实例增加
         systemStatus.occupied++;
@@ -103,15 +103,29 @@ export class JudgeManager {
     }
 
     // 编译成功，准备运行
-    let subTaskCount = 0;
+
+    // 解析 config.json 文件
+    this.response.fileSync(task.files["config.json"]);
+    new Promise((resolve) => {
+      const timer = setInterval(() => {
+        const configJson: string | undefined = this.fileList.get(task.files["config.json"]);
+        if (configJson !== undefined) {
+          judgeInstance.configure(configJson);
+        }
+
+        if (judgeInstance.isConfigured()) {
+          this.fileList.delete(task.files["config.json"]);
+          clearInterval(timer);
+          resolve(null);
+        }
+      }, 1000);
+    });
+
     // 从客户端获取评测需要的文件
     for (let filesKey in task.files) {
-      console.log(filesKey);
       this.response.fileSync(task.files[filesKey]);
-      subTaskCount++;
     }
-    judgeInstance.setSubTask(Math.floor(subTaskCount / 2));
-    // TODO config.json 文件的解析
+
     new Promise((resolve) => {
       const timer = setInterval(async () => {
         // TODO 错误检测的优化
