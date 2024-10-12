@@ -1,10 +1,11 @@
 import {
-    AcceptMessage, FinishMessage,
-    HandshakeMessage,
-    ProgressMessage,
-    RejectMessage,
-    StatusMessage,
-    SyncMessage
+  AcceptMessage,
+  FinishMessage,
+  HandshakeMessage,
+  ProgressMessage,
+  RejectMessage,
+  StatusMessage,
+  SyncMessage
 } from "../types/client";
 import systemStatus from "../config/system.status";
 
@@ -24,81 +25,81 @@ import systemStatus from "../config/system.status";
  *    同步评测进度，由服务端定时发送给客户端
  */
 export class Judge2WebManager {
-    // WebSocket 通讯句柄
-    private _ws: any;
+  // WebSocket 通讯句柄
+  private _ws: any;
 
-    constructor(_ws: any) {
-        this._ws = _ws;
+  constructor(_ws: any) {
+    this._ws = _ws;
 
-        // 每 3 分钟向客户端同步服务器状态
-        setInterval(() => {
-            this.statusSync();
-        }, 180_000);
-    }
+    // 每 3 分钟向客户端同步服务器状态
+    setInterval(() => {
+      this.statusSync();
+    }, 180_000);
+  }
 
-    /**
-     * 握手消息
-     */
-    public hello = () => {
-        const response: HandshakeMessage = {
-            type: "hello",
-            version: systemStatus.version,
-            cpus: systemStatus.cpus,
-            langs: systemStatus.langs,
-            "ext-features": systemStatus["ext-features"]
-        };
+  /**
+   * 握手消息
+   */
+  public hello = () => {
+    const response: HandshakeMessage = {
+      type: "hello",
+      version: systemStatus.version,
+      cpus: systemStatus.cpus,
+      langs: systemStatus.langs,
+      "ext-features": systemStatus["ext-features"]
+    };
 
-        this._ws.send(JSON.stringify(response));
-    }
+    this._ws.send(JSON.stringify(response));
+  }
 
-    /**
-     * 服务状态同步消息
-     */
-    public statusSync = () => {
-        const response: StatusMessage = {
-            type: "status",
-            cpus: systemStatus.cpus,
-            occupied: systemStatus.occupied,
-            queue: systemStatus.queue
-        };
+  /**
+   * 服务状态同步消息
+   */
+  public statusSync = () => {
+    const response: StatusMessage = {
+      type: "status",
+      cpus: systemStatus.cpus,
+      occupied: systemStatus.occupied,
+      queue: systemStatus.queue
+    };
 
-        this._ws.send(JSON.stringify(response));
-    }
+    this._ws.send(JSON.stringify(response));
+  }
 
-    /**
-     * 分配任务相应，响应客户端分配任务的请求
-     *
-     * @param type  响应的类型
-     * @param id    相应的任务的 id
-     */
-    public dispatchTask = (type: "accept" | "reject", id: number) => {
-        let response: AcceptMessage | RejectMessage = {
-            type, id
-        };
+  /**
+   * 分配任务相应，响应客户端分配任务的请求
+   *
+   * @param type  响应的类型
+   * @param id    相应的任务的 id
+   */
+  public dispatchTask = (type: "accept" | "reject", id: number) => {
+    let response: AcceptMessage | RejectMessage = {
+      type, id
+    };
 
-        this._ws.send(JSON.stringify(response));
-    }
+    this._ws.send(JSON.stringify(response));
+  }
 
-    /**
-     * 文件同步消息
-     *
-     * @param uuid 要获取的文件 uid
-     */
-    public fileSync = (uuid: string) => {
-        const response: SyncMessage = {
-            type: "sync",
-            uuid: uuid
-        };
+  /**
+   * 文件同步消息
+   *
+   * @param uuid 要获取的文件 uid
+   */
+  public fileSync = (uuid: string) => {
+    const response: SyncMessage = {
+      type: "sync",
+      uuid: uuid
+    };
 
-        this._ws.send(JSON.stringify(response));
-    }
+    this._ws.send(JSON.stringify(response));
+  }
 
-    /**
-     * 评测结果同步
-     *
-     * @param response 评测结果
-     */
-    public judgeSync = (response: ProgressMessage | FinishMessage) => {
-        this._ws.send(JSON.stringify(response));
-    }
+  /**
+   * 评测结果同步
+   *
+   * @param response 评测结果
+   */
+  public judgeSync = (response: ProgressMessage | FinishMessage) => {
+    this._ws.send(JSON.stringify(response));
+  }
 }
