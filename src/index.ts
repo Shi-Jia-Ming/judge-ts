@@ -13,22 +13,22 @@ import WebSocket from 'ws';
 const app = express();
 
 const server = http.createServer(app);
-const {v4 : uuid} = require('uuid')
+const {v4: uuid} = require('uuid')
 const wsInstance = new WebSocket.Server({server})
 
 // 存储客户端实例
 const clients = new Map();
 
 wsInstance.on('connection', (_ws: any) => {
-    if (process.env.RUNNING_LEVEL === "debug") {
-        console.log("[websocket]", "client connected!");
-    }
+  if (process.env.RUNNING_LEVEL === "debug") {
+    console.log("[websocket]", "client connected!");
+  }
 
-    // 生成client id
-    const clientId = generateClientId(_ws);
-    // 创建管理器实例
-    const responseManager = new Judge2WebManager(_ws);
-    const judgeManager: JudgeManager = new JudgeManager(responseManager);
+  // 生成client id
+  const clientId = generateClientId();
+  // 创建管理器实例
+  const responseManager = new Judge2WebManager(_ws);
+  const judgeManager: JudgeManager = new JudgeManager(responseManager);
 
   // 存储
   clients.set(clientId, {responseManager, judgeManager});
@@ -61,12 +61,6 @@ server.listen(systemConfig.port, () => {
   console.log("[websocket]", `the server is start at port ${systemConfig.port}`);
 });
 
-const generateClientId = (ws:any) => {
-  // 检查 upgradeReq 是否存在
-  if (ws.upgradeReq && ws.upgradeReq.headers) {
-    return ws.upgradeReq.headers['sec-websocket-key'];
-  }
-
-  // 如果 upgradeReq 不存在，使用 uuid 生成唯一标识符
+const generateClientId = () => {
   return uuid();
 }
