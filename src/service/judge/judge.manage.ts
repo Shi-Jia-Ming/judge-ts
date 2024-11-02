@@ -2,6 +2,7 @@ import {AssignMessage, SyncResponseMessage} from "../../types/client";
 import systemStatus from "../../config/system.status";
 import {Judge2WebManager} from "../response";
 import {Judge} from "./judge";
+import FileManager from "../file.manage";
 
 /**
  * 评测机实例管理类
@@ -9,6 +10,8 @@ import {Judge} from "./judge";
 export class JudgeManager {
   // 用来向客户端发送信息
   private response: Judge2WebManager;
+  // 用来请求文件
+  private fileManager: FileManager;
 
   // 评测机实例列表，长度为 systemStatus.cpus。每一个评测机实例为一个线程
   private judgeInstanceList: Judge[] = [];
@@ -16,8 +19,9 @@ export class JudgeManager {
   // 文件列表，用于存放从客户端获取的文件内容
   private fileList: Map<string, string> = new Map();
 
-  constructor(response: Judge2WebManager) {
+  constructor(response: Judge2WebManager, fileManager: FileManager) {
     this.response = response;
+    this.fileManager = fileManager;
     // 根据 cpus 数量创建评测机实例
     for (let i = 0; i < systemStatus.cpus; ++i) {
       // 确保 cpus 大于要评测的语言种类
@@ -26,8 +30,12 @@ export class JudgeManager {
   }
 
   // 存储文件
-  public saveFile = (file: SyncResponseMessage) => {
-    this.fileList.set(file.uuid, Buffer.from(file.data, "base64").toString());
+  public saveFile = (file: SyncResponseMessage, instanceId: number) => {
+    // this.fileList.set(file.uuid, Buffer.from(file.data, "base64").toString());
+    const instance = this.judgeInstanceList.find((instance) => instance.id === instanceId);
+    if (instance) {
+      instance.saveFile(file);
+    }
   }
 
   // 接收评测任务
@@ -105,22 +113,16 @@ export class JudgeManager {
     // 编译成功，准备运行
 
     // 解析 config.json 文件
-    this.response.fileSync(task.files["config.json"]);
+    this.fileManager.requestFile(task.files["config.json"], judgeInstance.id);
     await new Promise((resolve) => {
       const timer = setInterval(() => {
-        for (const instance of this.judgeInstanceList) {
-          console.log("fileList in config", this.fileList, instance.id);
-        }
-        const configJson: string | undefined = this.fileList.get(task.files["config.json"]);
-        console.log("configJson", configJson, task.id);
+        const configJson: string | undefined = judgeInstance.fileList.get(task.files["config.json"]);
         if (configJson !== undefined) {
           judgeInstance.configure(configJson);
         }
 
 
         if (judgeInstance.isConfigured()) {
-          console.log("delete", task.files["config.json"], this.fileList.delete(task.files["config.json"]));
-          console.log("config", judgeInstance.subTask, task.id);
           clearInterval(timer);
           resolve(null);
         }
@@ -130,15 +132,13 @@ export class JudgeManager {
     // 从客户端获取评测需要的文件
     for (let filesKey in task.files) {
       if (filesKey === "config.json") continue;
-      this.response.fileSync(task.files[filesKey]);
+      this.fileManager.requestFile(task.files[filesKey], judgeInstance.id);
     }
 
     await new Promise((resolve) => {
       const timer = setInterval(async () => {
-        console.log("run", task.id);
         // TODO 错误检测的优化
-        console.log("fileList", this.fileList, task.id);
-        await judgeInstance.run(this.fileList, task).catch((e) => {
+        await judgeInstance.run(judgeInstance.fileList, task).catch((e) => {
           if (process.env.RUNNING_LEVEL === "debug") {
             console.error("[judge manager]", "run error", e);
           }
@@ -163,7 +163,6 @@ export class JudgeManager {
         }
       }, 1000);
     });
-    console.log("finish", task.id);
     this.response.judgeSync(judgeInstance.getJudgeStatus());
     systemStatus.occupied--;
     judgeInstance.reset();

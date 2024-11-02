@@ -4,7 +4,7 @@ import {
   DispatchTask,
   FinishMessage,
   JudgeResult,
-  ProgressMessage, SubtaskResult, TaskResult,
+  ProgressMessage, SubtaskResult, SyncResponseMessage, TaskResult,
 } from "../../types/client";
 import {JudgeFactory} from "./judge.factory";
 
@@ -27,6 +27,8 @@ export class Judge {
   private config: ConfigJson | undefined;
   // 子任务
   public subTask: ConfigSubtask<ConfigTaskDefault>[] = [];
+  // 需要的文件列表
+  public fileList: Map<string, string> = new Map();
 
   constructor(language: string, id: number) {
     this.language = language;
@@ -47,6 +49,10 @@ export class Judge {
       result: this.judgeResult
     };
 
+  }
+
+  public saveFile = (file: SyncResponseMessage) => {
+    this.fileList.set(file.uuid, Buffer.from(file.data, "base64").toString());
   }
 
   /**
@@ -175,10 +181,8 @@ export class Judge {
    */
   public run = async (fileList: Map<string, string>, task: AssignMessage): Promise<boolean> => {
     const subtask = this.subTask[0];
-    // console.log(subtask, task.id);
     for (let i = 0; i < subtask.cases.length; ++i) {
       if (!(fileList.has(task.files[subtask.cases[i].input]) && fileList.has(task.files[subtask.cases[i].output]))) {
-        console.log("file not found");
         return false;
       }
     }

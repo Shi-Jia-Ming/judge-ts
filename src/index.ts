@@ -9,6 +9,7 @@ import "dotenv/config";
 require('dotenv').config();
 
 import WebSocket from 'ws';
+import FileManager from './service/file.manage';
 
 const app = express();
 
@@ -28,7 +29,9 @@ wsInstance.on('connection', (_ws: any) => {
   const clientId = generateClientId();
   // 创建管理器实例
   const responseManager = new Judge2WebManager(_ws);
-  const judgeManager: JudgeManager = new JudgeManager(responseManager);
+  // TODO fileManager 和 judgeManager 的关系有点混乱
+  const fileManager: FileManager = new FileManager(responseManager);
+  const judgeManager: JudgeManager = new JudgeManager(responseManager, fileManager);
 
   // 存储
   clients.set(clientId, {responseManager, judgeManager});
@@ -44,13 +47,12 @@ wsInstance.on('connection', (_ws: any) => {
     if (received.type === "task") {
       const isReceived: boolean = judgeManager.receiveTask(received);
     } else if (received.type === "sync") {
-      judgeManager.saveFile(received);
+      fileManager.receiveFile(received, judgeManager);
     }
   });
 
   _ws.on('close', () => {
-    console.log(`Client ${clientId} closed!`);
-    clients.delete(clientId)
+    clients.delete(clientId);
     if (process.env.RUNNING_LEVEL === "debug") {
       console.log("[websocket]", "client closed!");
     }
