@@ -17,6 +17,9 @@ export default class FileManager {
     }
 
     public requestFile = (uuid: string, instanceId: number) => {
+        if (process.env.RUNNING_LEVEL === "debug") {
+            console.log("[file manager]", "request file", uuid, "for instance", instanceId);
+        }
         this.response.fileSync(uuid);
         this.fileList.push({ uuid, instanceId });
     }
@@ -25,9 +28,8 @@ export default class FileManager {
         const waiting = this.fileList.find((waiting) => waiting.uuid === file.uuid);
         if (waiting) {
             judgeManager.saveFile(file, waiting.instanceId);
-            this.fileList = this.fileList.filter((waiting) => waiting.uuid !== file.uuid);
+            this.fileList.splice(this.fileList.indexOf(waiting), 1);
         } else {
-            // TODO error
             if (process.env.RUNNING_LEVEL === "debug") {
                 console.error("[file manager]", "no judge instance is waiting for this file");
             }
