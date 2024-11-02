@@ -18,11 +18,13 @@ RUN cd judge-ts && npm install && npm run build
 RUN cd judge-ts && cp .env.example .env
 
 RUN apt install -y gcc g++
+RUN mkdir /root/output
 
 COPY ./start.sh /root/start.sh
+
 RUN chmod +x ./start.sh
 RUN chmod +x ./go-judge
 
 EXPOSE 5050/tcp 8000/tcp
 
-ENTRYPOINT [ "sh", "./start.sh" ]
+ENTRYPOINT [ "sh", "start.sh" ]
