@@ -4,7 +4,7 @@ import {
   DispatchTask,
   FinishMessage,
   JudgeResult,
-  ProgressMessage, SubtaskResult, TaskResult,
+  ProgressMessage, SubtaskResult, SyncResponseMessage, TaskResult,
 } from "../../types/client";
 import {JudgeFactory} from "./judge.factory";
 
@@ -12,6 +12,7 @@ import {JudgeFactory} from "./judge.factory";
  * 评测机类
  */
 export class Judge {
+  public id: number;
   // 支持的语言
   private readonly language: string;
   // 是否被占用
@@ -25,10 +26,13 @@ export class Judge {
   // 评测任务的配置文件
   private config: ConfigJson | undefined;
   // 子任务
-  private subTask: ConfigSubtask<ConfigTaskDefault>[] = [];
+  public subTask: ConfigSubtask<ConfigTaskDefault>[] = [];
+  // 需要的文件列表
+  public fileList: Map<string, string> = new Map();
 
-  constructor(language: string) {
+  constructor(language: string, id: number) {
     this.language = language;
+    this.id = id;
     this.execFile = '';
     this.occupied = false;
 
@@ -45,6 +49,10 @@ export class Judge {
       result: this.judgeResult
     };
 
+  }
+
+  public saveFile = (file: SyncResponseMessage) => {
+    this.fileList.set(file.uuid, Buffer.from(file.data, "base64").toString());
   }
 
   /**
