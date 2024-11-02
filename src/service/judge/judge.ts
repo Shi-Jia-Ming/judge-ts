@@ -4,7 +4,7 @@ import {
   DispatchTask,
   FinishMessage,
   JudgeResult,
-  ProgressMessage, SubtaskResult, TaskResult,
+  ProgressMessage, SubtaskResult, SyncResponseMessage, TaskResult,
 } from "../../types/client";
 import {JudgeFactory} from "./judge.factory";
 
@@ -12,6 +12,7 @@ import {JudgeFactory} from "./judge.factory";
  * 评测机类
  */
 export class Judge {
+  public id: number;
   // 支持的语言
   private readonly language: string;
   // 是否被占用
@@ -25,10 +26,13 @@ export class Judge {
   // 评测任务的配置文件
   private config: ConfigJson | undefined;
   // 子任务
-  private subTask: ConfigSubtask<ConfigTaskDefault>[] = [];
+  public subTask: ConfigSubtask<ConfigTaskDefault>[] = [];
+  // 需要的文件列表
+  public fileList: Map<string, string> = new Map();
 
-  constructor(language: string) {
+  constructor(language: string, id: number) {
     this.language = language;
+    this.id = id;
     this.execFile = '';
     this.occupied = false;
 
@@ -45,6 +49,10 @@ export class Judge {
       result: this.judgeResult
     };
 
+  }
+
+  public saveFile = (file: SyncResponseMessage) => {
+    this.fileList.set(file.uuid, Buffer.from(file.data, "base64").toString());
   }
 
   /**
@@ -278,6 +286,13 @@ export class Judge {
    */
   public contrast = (answer: string, output: string) => {
     // TODO 对比答案只是简单的字符串对比，后续可以添加对空格、换行符等的处理
-    return answer === output;
+    // 定义要移除的空白字符模式
+    const whitespacePattern = /^[\s]*|[\s]*$/g;
+
+    // 移除字符串开头和结尾的所有空白字符（空格、制表符、换行符）
+    const trimmedOutput = output.replace(whitespacePattern, '');
+    const trimmedAnswer = answer.replace(whitespacePattern, '');
+    return trimmedOutput === trimmedAnswer;
+    // return answer === output;
   }
 }
