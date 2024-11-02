@@ -12,6 +12,7 @@ import {JudgeFactory} from "./judge.factory";
  * 评测机类
  */
 export class Judge {
+  public id: number;
   // 支持的语言
   private readonly language: string;
   // 是否被占用
@@ -25,10 +26,11 @@ export class Judge {
   // 评测任务的配置文件
   private config: ConfigJson | undefined;
   // 子任务
-  private subTask: ConfigSubtask<ConfigTaskDefault>[] = [];
+  public subTask: ConfigSubtask<ConfigTaskDefault>[] = [];
 
-  constructor(language: string) {
+  constructor(language: string, id: number) {
     this.language = language;
+    this.id = id;
     this.execFile = '';
     this.occupied = false;
 
@@ -173,8 +175,10 @@ export class Judge {
    */
   public run = async (fileList: Map<string, string>, task: AssignMessage): Promise<boolean> => {
     const subtask = this.subTask[0];
+    // console.log(subtask, task.id);
     for (let i = 0; i < subtask.cases.length; ++i) {
       if (!(fileList.has(task.files[subtask.cases[i].input]) && fileList.has(task.files[subtask.cases[i].output]))) {
+        console.log("file not found");
         return false;
       }
     }

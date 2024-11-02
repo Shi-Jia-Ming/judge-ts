@@ -21,7 +21,7 @@ export class JudgeManager {
     // 根据 cpus 数量创建评测机实例
     for (let i = 0; i < systemStatus.cpus; ++i) {
       // 确保 cpus 大于要评测的语言种类
-      this.judgeInstanceList[i] = new Judge(systemStatus.langs[i % systemStatus.langs.length]);
+      this.judgeInstanceList[i] = new Judge(systemStatus.langs[i % systemStatus.langs.length], i);
     }
   }
 
@@ -106,15 +106,21 @@ export class JudgeManager {
 
     // 解析 config.json 文件
     this.response.fileSync(task.files["config.json"]);
-    new Promise((resolve) => {
+    await new Promise((resolve) => {
       const timer = setInterval(() => {
+        for (const instance of this.judgeInstanceList) {
+          console.log("fileList in config", this.fileList, instance.id);
+        }
         const configJson: string | undefined = this.fileList.get(task.files["config.json"]);
+        console.log("configJson", configJson, task.id);
         if (configJson !== undefined) {
           judgeInstance.configure(configJson);
         }
 
+
         if (judgeInstance.isConfigured()) {
-          this.fileList.delete(task.files["config.json"]);
+          console.log("delete", task.files["config.json"], this.fileList.delete(task.files["config.json"]));
+          console.log("config", judgeInstance.subTask, task.id);
           clearInterval(timer);
           resolve(null);
         }
@@ -123,12 +129,15 @@ export class JudgeManager {
 
     // 从客户端获取评测需要的文件
     for (let filesKey in task.files) {
+      if (filesKey === "config.json") continue;
       this.response.fileSync(task.files[filesKey]);
     }
 
-    new Promise((resolve) => {
+    await new Promise((resolve) => {
       const timer = setInterval(async () => {
+        console.log("run", task.id);
         // TODO 错误检测的优化
+        console.log("fileList", this.fileList, task.id);
         await judgeInstance.run(this.fileList, task).catch((e) => {
           if (process.env.RUNNING_LEVEL === "debug") {
             console.error("[judge manager]", "run error", e);
@@ -137,7 +146,7 @@ export class JudgeManager {
             type: "finish",
             id: task.id,
             result: {
-              message: "",
+              message: e.message,
               status: "System Error",
               score: 0,
               /** 所有子任务结果 */
@@ -153,10 +162,10 @@ export class JudgeManager {
           resolve(null);      // 执行 then
         }
       }, 1000);
-    }).then(() => {
-      this.response.judgeSync(judgeInstance.getJudgeStatus());
-      systemStatus.occupied--;
-      judgeInstance.reset();
     });
+    console.log("finish", task.id);
+    this.response.judgeSync(judgeInstance.getJudgeStatus());
+    systemStatus.occupied--;
+    judgeInstance.reset();
   }
 }
