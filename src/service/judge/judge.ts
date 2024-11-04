@@ -277,14 +277,29 @@ export class Judge {
    * @return 答案是否正确
    */
   public contrast = (answer: string, output: string) => {
-    // TODO 对比答案只是简单的字符串对比，后续可以添加对空格、换行符等的处理
-    // 定义要移除的空白字符模式
-    const whitespacePattern = /^[\s]*|[\s]*$/g;
-
-    // 移除字符串开头和结尾的所有空白字符（空格、制表符、换行符）
-    const trimmedOutput = output.replace(whitespacePattern, '');
-    const trimmedAnswer = answer.replace(whitespacePattern, '');
+    // 去除开头结尾的字符
+    let trimmedAnswer = answer.trim();
+    let trimmedOutput = output.trim();
+    // 将 \r\n 替换为 \n
+    trimmedAnswer = trimmedAnswer.replace(/\r\n/g, '\n');
+    trimmedOutput = trimmedOutput.replace(/\r\n/g, '\n');
+    // 将 \r 替换为 空
+    trimmedAnswer = trimmedAnswer.replace(/\r/g,'');
+    trimmedOutput = trimmedOutput.replace(/\r/g,'');
+    // 这两行主要是测试用，会删除全部的字符，可以用来检查数据是否异常
+    // // 去除非打印字符
+    // trimmedAnswer = trimmedAnswer.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+    // trimmedOutput = trimmedOutput.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+    // // 去除所有类型的空白字符
+    // trimmedAnswer = trimmedAnswer.replace(/[\s\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]+/g, ' ');
+    // trimmedOutput = trimmedOutput.replace(/[\s\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]+/g, ' ');
+    // console.log("trimmed answer!!!!:", trimmedAnswer)
+    // console.log("trimmed output!!!!:", trimmedOutput)
+    // // return answer === output;
+    // console.log(trimmedOutput === trimmedAnswer)
+    //
+    // console.log(JSON.stringify(trimmedAnswer));
+    // console.log(JSON.stringify(trimmedOutput));
     return trimmedOutput === trimmedAnswer;
-    // return answer === output;
   }
 }
