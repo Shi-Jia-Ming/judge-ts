@@ -101,5 +101,6 @@ export class Judge2WebManager {
    */
   public judgeSync = (response: ProgressMessage | FinishMessage) => {
     this._ws.send(JSON.stringify(response));
+    console.log(JSON.stringify(response));
   }
 }

@@ -210,7 +210,7 @@ export class Judge {
       } = await JudgeFactory.exec(input, this.execFile, task);
 
       const caseResult: TaskResult = {
-        message: result.output,
+        message: "",
         status: "Running",
         time: result.runtime,
         /** 内存使用量，单位为 byte，如果没有结果则为 -1 */
@@ -294,20 +294,6 @@ export class Judge {
     // 将 \r 替换为 空
     trimmedAnswer = trimmedAnswer.replace(/\r/g,'');
     trimmedOutput = trimmedOutput.replace(/\r/g,'');
-    // 这两行主要是测试用，会删除全部的字符，可以用来检查数据是否异常
-    // // 去除非打印字符
-    // trimmedAnswer = trimmedAnswer.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
-    // trimmedOutput = trimmedOutput.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
-    // // 去除所有类型的空白字符
-    // trimmedAnswer = trimmedAnswer.replace(/[\s\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]+/g, ' ');
-    // trimmedOutput = trimmedOutput.replace(/[\s\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]+/g, ' ');
-    // console.log("trimmed answer!!!!:", trimmedAnswer)
-    // console.log("trimmed output!!!!:", trimmedOutput)
-    // // return answer === output;
-    // console.log(trimmedOutput === trimmedAnswer)
-    //
-    // console.log(JSON.stringify(trimmedAnswer));
-    // console.log(JSON.stringify(trimmedOutput));
     return trimmedOutput === trimmedAnswer;
   }
 }
