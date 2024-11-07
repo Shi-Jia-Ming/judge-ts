@@ -210,7 +210,7 @@ export class Judge {
       } = await JudgeFactory.exec(input, this.execFile, task);
 
       const caseResult: TaskResult = {
-        message: result.output,
+        message: "",
         status: "Running",
         time: result.runtime,
         /** 内存使用量，单位为 byte，如果没有结果则为 -1 */
@@ -285,14 +285,15 @@ export class Judge {
    * @return 答案是否正确
    */
   public contrast = (answer: string, output: string) => {
-    // TODO 对比答案只是简单的字符串对比，后续可以添加对空格、换行符等的处理
-    // 定义要移除的空白字符模式
-    const whitespacePattern = /^[\s]*|[\s]*$/g;
-
-    // 移除字符串开头和结尾的所有空白字符（空格、制表符、换行符）
-    const trimmedOutput = output.replace(whitespacePattern, '');
-    const trimmedAnswer = answer.replace(whitespacePattern, '');
+    // 去除开头结尾的字符
+    let trimmedAnswer = answer.trim();
+    let trimmedOutput = output.trim();
+    // 将 \r\n 替换为 \n
+    trimmedAnswer = trimmedAnswer.replace(/\r\n/g, '\n');
+    trimmedOutput = trimmedOutput.replace(/\r\n/g, '\n');
+    // 将 \r 替换为 空
+    trimmedAnswer = trimmedAnswer.replace(/\r/g,'');
+    trimmedOutput = trimmedOutput.replace(/\r/g,'');
     return trimmedOutput === trimmedAnswer;
-    // return answer === output;
   }
 }
