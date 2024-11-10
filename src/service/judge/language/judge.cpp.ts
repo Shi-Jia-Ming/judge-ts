@@ -127,6 +127,6 @@ export class JudgeCpp {
       code = 2;
     });
 
-    return {code: code, output: output, runtime: Math.round(runtime / 1000), memory: Math.round(memory / 1024)};
+    return {code: code, output: output, runtime: Math.round(runtime / 1000 / 1000), memory: Math.round(memory / 1024)};
   }
 }
