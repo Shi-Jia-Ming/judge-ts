@@ -295,10 +295,12 @@ export class Judge {
    * @return 答案是否正确
    */
   public contrast = (answer: string, output: string) => {
-    // 去除开头结尾的字符
-    const whitespacePattern = /^[\r\t\f\v\ ]*|[\r\t\f\v\ ]*$/gm;
-    let trimmedAnswer = answer.replace(whitespacePattern, '');
-    let trimmedOutput = output.replace(whitespacePattern, '');
+    // 去除开头结尾的字符 TODO 去除每一行开头和结尾的字符
+    // const whitespacePattern = /^[\r\t\f\v\ ]*|[\r\t\f\v\ ]*$/gm;
+    // let trimmedAnswer = answer.replace(whitespacePattern, '');
+    // let trimmedOutput = output.replace(whitespacePattern, '');
+    let trimmedAnswer = answer.trim();
+    let trimmedOutput = output.trim();
     // 将 \r\n 替换为 \n
     trimmedAnswer = trimmedAnswer.replace(/\r\n/g, '\n');
     trimmedOutput = trimmedOutput.replace(/\r\n/g, '\n');
