@@ -217,6 +217,16 @@ export class Judge {
         memory: result.memory,
       };
 
+      
+      if (process.env.RUNNING_LEVEL === "debug") {
+        console.log("time used:", result.runtime, "us");
+        console.log("memory used:", result.memory, "kb");
+        if (this.config?.type === "default" && this.config?.time) 
+          console.log("time limit:", this.config.time, "us");
+        if (this.config?.type === "default" && this.config?.memory)
+          console.log("memory limit:", Math.trunc(this.config.memory / 1000), "kb");
+      }
+
       // 检查内存和时间限制
       if (this.config?.type === "default" && this.config?.time && result.runtime > this.config?.time) {
         caseResult.status = "Time Limit Exceeded";
@@ -285,7 +295,10 @@ export class Judge {
    * @return 答案是否正确
    */
   public contrast = (answer: string, output: string) => {
-    // 去除开头结尾的字符
+    // 去除开头结尾的字符 TODO 去除每一行开头和结尾的字符
+    // const whitespacePattern = /^[\r\t\f\v\ ]*|[\r\t\f\v\ ]*$/gm;
+    // let trimmedAnswer = answer.replace(whitespacePattern, '');
+    // let trimmedOutput = output.replace(whitespacePattern, '');
     let trimmedAnswer = answer.trim();
     let trimmedOutput = output.trim();
     // 将 \r\n 替换为 \n

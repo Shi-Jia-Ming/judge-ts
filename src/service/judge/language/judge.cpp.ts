@@ -6,6 +6,10 @@ import axios from "axios";
 
 export class JudgeCpp {
   public static judge = async (task: DispatchTask): Promise<{ code: number; message: string, fileId: string }> => {
+
+    // 默认开启O2优化
+    if (1) task.code = "#pragma GCC optimize(2)\n" + task.code;
+
     const judgeTask: JudgeRequest = {
       cmd: [{
         args: ["/usr/bin/g++", "a.cpp", "-o", "a"],
@@ -14,13 +18,13 @@ export class JudgeCpp {
           content: ""
         }, {
           name: "stdout",
-          max: 10240
+          max: 998244353998244353
         }, {
           name: "stderr",
-          max: 10240
+          max: 998244353998244353
         }],
         cpuLimit: 10000000000,
-        memoryLimit: 104857600,
+        memoryLimit: 2*1024*1024*1024,
         procLimit: 50,
         copyIn: {
           "a.cpp": {
@@ -69,13 +73,13 @@ export class JudgeCpp {
           content: input
         }, {
           name: "stdout",
-          max: 10240
+          max: 998244353998244353
         }, {
           name: "stderr",
-          max: 10240
+          max: 998244353998244353
         }],
         cpuLimit: 10000000000,
-        memoryLimit: 104857600,
+        memoryLimit: 2*1024*1024*1024,
         procLimit: 50,
         copyIn: {
           "a": {
@@ -123,6 +127,6 @@ export class JudgeCpp {
       code = 2;
     });
 
-    return {code: code, output: output, runtime: Math.round(runtime / 1000), memory: Math.round(memory / 1024)};
+    return {code: code, output: output, runtime: Math.round(runtime / 1000 / 1000), memory: Math.round(memory / 1024)};
   }
 }
