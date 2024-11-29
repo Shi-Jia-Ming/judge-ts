@@ -11,10 +11,10 @@ docker build -t judge .
 docker run -it --privileged --name=judge judge
 ```
 
-# Use Automatic Shell
+# Use Automatic Shell Script
 
 ```bash
-#without proxy
+# without proxy
 sudo ./build.sh
 
 # with proxy
