@@ -5,7 +5,7 @@ import {
   ProgressMessage,
   RejectMessage,
   StatusMessage,
-  SyncMessage
+  SyncMessage,
 } from "../types/client";
 import systemStatus from "../config/system.status";
 
@@ -46,11 +46,11 @@ export class Judge2WebManager {
       version: systemStatus.version,
       cpus: systemStatus.cpus,
       langs: systemStatus.langs,
-      "ext-features": systemStatus["ext-features"]
+      "ext-features": systemStatus["ext-features"],
     };
 
     this._ws.send(JSON.stringify(response));
-  }
+  };
 
   /**
    * 服务状态同步消息
@@ -60,11 +60,11 @@ export class Judge2WebManager {
       type: "status",
       cpus: systemStatus.cpus,
       occupied: systemStatus.occupied,
-      queue: systemStatus.queue
+      queue: systemStatus.queue,
     };
 
     this._ws.send(JSON.stringify(response));
-  }
+  };
 
   /**
    * 分配任务相应，响应客户端分配任务的请求
@@ -74,11 +74,12 @@ export class Judge2WebManager {
    */
   public dispatchTask = (type: "accept" | "reject", id: number) => {
     let response: AcceptMessage | RejectMessage = {
-      type, id
+      type,
+      id,
     };
 
     this._ws.send(JSON.stringify(response));
-  }
+  };
 
   /**
    * 文件同步消息
@@ -88,11 +89,11 @@ export class Judge2WebManager {
   public fileSync = (uuid: string) => {
     const response: SyncMessage = {
       type: "sync",
-      uuid: uuid
+      uuid: uuid,
     };
 
     this._ws.send(JSON.stringify(response));
-  }
+  };
 
   /**
    * 评测结果同步
@@ -101,6 +102,5 @@ export class Judge2WebManager {
    */
   public judgeSync = (response: ProgressMessage | FinishMessage) => {
     this._ws.send(JSON.stringify(response));
-    console.log(JSON.stringify(response));
-  }
+  };
 }
