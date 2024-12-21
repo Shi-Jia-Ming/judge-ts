@@ -3,9 +3,9 @@ import {JudgeCpp} from "./language/judge.cpp";
 import {JudgeC} from "./language/judge.c";
 import {JudgePython} from "./language/judge.python";
 import {JudgeJava} from "./language/judge.java";
+import axios from "axios";
 
 export class JudgeFactory {
-
   public static judge = async (compileTask: DispatchTask): Promise<{
     code: number,
     message: string,
@@ -39,4 +39,8 @@ export class JudgeFactory {
     }
   }
 
+  // TODO 直接在这里实现是不是不太好
+  static async deleteFile(execFile: string) {
+    const _ = await axios.delete(`http://localhost:5050/file/${execFile}`);
+  }
 }
