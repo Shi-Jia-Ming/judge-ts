@@ -100,6 +100,9 @@ export class Judge {
     this.judgeResult.subtasks.splice(0);
     this.judgeStatus.type = "finish";
     this.judgeStatus.id = -1;
+
+    // 删除 GoJudge 内的文件
+    JudgeFactory.deleteFile(this.execFile);
   }
 
   /**
