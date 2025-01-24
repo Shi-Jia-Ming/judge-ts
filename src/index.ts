@@ -60,7 +60,9 @@ wsInstance.on('connection', (_ws: any) => {
 })
 
 server.listen(systemConfig.port, () => {
-  console.log("[websocket]", `the server is start at port ${systemConfig.port}`);
+  if (process.env.RUNNING_LEVEL === "debug") {
+    console.log("[websocket]", `the server is start at port ${systemConfig.port}`);
+  }
 });
 
 const generateClientId = () => {

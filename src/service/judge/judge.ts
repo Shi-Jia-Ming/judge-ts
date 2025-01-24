@@ -102,7 +102,7 @@ export class Judge {
     this.judgeStatus.id = -1;
 
     // 删除 GoJudge 内的文件
-    JudgeFactory.deleteFile(this.execFile);
+    // JudgeFactory.deleteFile(this.execFile);
   }
 
   /**
