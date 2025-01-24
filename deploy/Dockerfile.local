@@ -1,0 +1,18 @@
+FROM criyle/go-judge
+
+WORKDIR /opt
+
+RUN apt update && apt install -y curl sudo gcc g++ supervisor
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+RUN apt-get install -y nodejs
+
+COPY ./go-judge.conf /etc/supervisor/conf.d/go-judge.conf
+COPY .env.deploy /opt/.env
+
+COPY package.json /opt/package.json
+
+RUN npm install
+
+EXPOSE 5050/tcp 8000/tcp
+
+ENTRYPOINT [  "/bin/sh", "-c", "supervisord -c /etc/supervisor/supervisord.conf && node /opt/dist/index.js" ]
