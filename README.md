@@ -6,6 +6,7 @@
 
 ### 目录结构
 ```
+├── deploy                          # 快速部署目录
 ├── src
 │   ├── index.ts                    # 项目入口文件
 │   ├── config                      # 配置文件目录
@@ -56,3 +57,31 @@ docker run -it --rm --privileged --shm-size=256m -p 5050:5050 --name=go-judge cr
 ```
 
 该命令创建一个名为`go-judge`的一次性容器，监听`5050`端口，可以通过[http://localhost:5050](http://localhost:5050)访问`GoJudge`的前端页面。在停止容器后，容器会自动删除。
+
+### 快速部署
+
+项目增加了基于`Docker`的快速部署功能，可以不下载GoJudge即可在本地部署，方便代码调试。相关的文件在`deploy`目录中。相关文件的解释如下：
+
+```txt
+├── .env.deploy         # 生产环境下的 .env 文件
+├── Dockerfile.local    # Dockerfile 文件
+├── go-judge.conf       # supervisor 的服务注册配置文件
+├── package.json        # 项目的依赖配置文件
+```
+
+其中，`go-judge.conf`文件和`Dockerfile.local`文件不需要更改，剩下两个文件可以根据调试的需要更改。更改之后需要重新构建镜像。构建镜像的命令如下：
+
+```bash
+# 构建需要在 deploy 目录中进行
+cd deploy
+
+docker build -t judge-local -f Dockerfile.local .
+```
+
+创建并运行容器的命令如下：
+
+```bash
+docker run --rm -it --privileged -v ./dist:/dist --name judge-local -p 8000:8000 judge-local
+```
+
+该命令创建的容器在停止后会被删除。`-it`参数允许容器运行一个交互式的终端会话，用户可以在自己的终端中运行容器内部的交互式`bash`终端。调试结束后，执行`Ctrl + C`退出会话，容器自动被删除。
