@@ -7,6 +7,7 @@ import {
   ProgressMessage, SubtaskResult, SyncResponseMessage, TaskResult,
 } from "../../types/client";
 import {JudgeFactory} from "./judge.factory";
+import JudgeInterface from "./language/judge.interface";
 
 /**
  * 评测机类
@@ -29,6 +30,8 @@ export class Judge {
   public subTask: ConfigSubtask<ConfigTaskDefault>[] = [];
   // 需要的文件列表
   public fileList: Map<string, string> = new Map();
+  // GoJudge 评测机句柄
+  private judger: JudgeInterface | null = null;
 
   constructor(language: string, id: number) {
     this.language = language;
@@ -126,6 +129,8 @@ export class Judge {
    * @return 是否接取任务
    */
   public receive = (task: AssignMessage): boolean => {
+    // 设置 GoJudge 评测机句柄
+    this.judger = JudgeFactory.build(task.language);
     if (task.language === this.language && !this.occupied) {
       this.occupied = true;
       this.judgeResult.status = "Judging";
@@ -152,7 +157,7 @@ export class Judge {
       files: task.files
     };
 
-    const output: { code: number, message: string, fileId: string } = await JudgeFactory.judge(compileTask);
+    const output: { code: number, message: string, fileId: string } = await this.judger!.judge(compileTask);
 
     if (output.code === 1) {
       // 编译错误
@@ -210,7 +215,7 @@ export class Judge {
         output: string,
         runtime: number,
         memory: number
-      } = await JudgeFactory.exec(input, this.execFile, task);
+      } = await this.judger!.exec(input, this.execFile);
 
       const caseResult: TaskResult = {
         message: "",

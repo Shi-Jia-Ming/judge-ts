@@ -1,9 +1,17 @@
 import {DispatchTask} from "../../../types/client";
 import {FileError, JudgeRequest, Result} from "../../../types/server";
 import axios from "axios";
+import JudgeInterface from "./judge.interface";
+import { v4 as uuidv4 } from 'uuid';
 
-export class JudgeJava {
-  public static judge = async (task: DispatchTask): Promise<{ code: number, message: string, fileId: string }> => {
+export class JudgeJava implements JudgeInterface {
+  fileName: string = "";
+
+  public constructor() {
+    this.fileName = uuidv4();
+  }
+  
+  public judge = async (task: DispatchTask): Promise<{ code: number, message: string, fileId: string }> => {
     const judgeTask: JudgeRequest = {
       cmd: [{
         args: ["/usr/bin/javac", "Main.java"], // Java的文件由主类，这里使用Main
@@ -50,7 +58,7 @@ export class JudgeJava {
     return {code: code, message: output, fileId: fileId};
   }
 
-  public static exec = async (input: string, execFileId: string): Promise<{
+  public exec = async (input: string, execFileId: string): Promise<{
     code: number,
     output: string,
     runtime: number,

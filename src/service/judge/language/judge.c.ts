@@ -3,10 +3,18 @@
 import { DispatchTask } from "../../../types/client";
 import { FileError, JudgeRequest, Result } from "../../../types/server";
 import axios from "axios";
+import JudgeInterface from "./judge.interface";
+import { v4 as uuidv4 } from 'uuid';
 
-export class JudgeC {
+export class JudgeC implements JudgeInterface {
+  fileName: string = "";
+
+  public constructor() {
+    this.fileName = uuidv4();
+  }
+
   // 编译C语言
-  public static judge = async (
+  public judge = async (
     task: DispatchTask,
   ): Promise<{ code: number; message: string; fileId: string }> => {
     // 默认开启O2优化
@@ -72,7 +80,7 @@ export class JudgeC {
   };
 
   // 运行C语言
-  public static exec = async (
+  public exec = async (
     input: string,
     execFileId: string,
   ): Promise<{

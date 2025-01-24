@@ -1,15 +1,26 @@
 import {DispatchTask} from "../../../types/client";
 import {FileError, JudgeRequest, Result} from "../../../types/server";
 import axios from "axios";
+import JudgeInterface from "./judge.interface";
+import { v4 as uuidv4 } from 'uuid';
 
-export class JudgePython {
+export class JudgePython implements JudgeInterface {
+  private code: string = "";
+  fileName: string = "";
+
+  public constructor() {
+    this.fileName = uuidv4();
+  }
+
+
   // 准备并运行 Python 代码
-  public static judge = async (): Promise<{ code: number, message: string, fileId: string }> => {
+  public judge = async (task: DispatchTask): Promise<{ code: number, message: string, fileId: string }> => {
+    this.code = task.code;
     return {code: 0, message: "Python Running!", fileId: "Python"};
   }
 
   // 运行 Python 代码
-  public static exec = async (input: string, task: DispatchTask): Promise<{
+  public exec = async (input: string, _execFileId: string): Promise<{
     code: number,
     output: string,
     runtime: number,
@@ -33,7 +44,7 @@ export class JudgePython {
         procLimit: 50,
         copyIn: {
           "a.py": {
-            content: task.code
+            content: this.code
           }
         }
       }]
