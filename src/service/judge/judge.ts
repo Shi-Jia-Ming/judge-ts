@@ -102,7 +102,7 @@ export class Judge {
     this.judgeStatus.id = -1;
 
     // 删除 GoJudge 内的文件
-    // JudgeFactory.deleteFile(this.execFile);
+    JudgeFactory.deleteFile(this.execFile);
   }
 
   /**
@@ -221,7 +221,7 @@ export class Judge {
       };
 
       
-      if (process.env.RUNNING_LEVEL === "debug") {
+      if (process.env.RUNNING_LEVEL === "verbose") {
         console.log("time used:", result.runtime, "us");
         console.log("memory used:", result.memory, "kb");
         if (this.config?.type === "default" && this.config?.time) 
