@@ -77,10 +77,14 @@ docker run -it --rm --privileged --shm-size=256m -p 5050:5050 --name=go-judge cr
 docker build -t judge-local -f .\\deploy\\Dockerfile.local .\\deploy
 ```
 
-创建并运行容器的命令如下：
+创建并运行容器的命令如下，如果只需要运行容器，则无需构建镜像，可以直接从Docker Hub中拉取（`lengtouzai/judge-local`）：
 
 ```bash
-docker run --rm -it --privileged -v .\\dist:/opt/dist -v .\\deploy\\.env.deploy:/opt/.env -v .\\deploy\\package.json:/opt/package.json --name judge-local -p 8000:8000 judge-local
+docker run --rm -it --privileged -v .\\dist:/opt/dist -v .\\deploy\\.env.deploy:/opt/.env -v .\\deploy\\package.json:/opt/package.json --name judge-local -p 8000:8000 lengtouzai/judge-local
 ```
 
 该命令创建的容器在停止后会被删除。`-it`参数允许容器运行一个交互式的终端会话，用户可以在自己的终端中运行容器内部的交互式`bash`终端。调试结束后，执行`Ctrl + C`退出会话，容器自动被删除。
+
+容器可以配置三个数据卷，其中有一个必须配置，其他两个可以选择性配置。`/opt/dist`目录为项目构建后的目录，需要从外部映射。上述指令中将本地构建的`dist`目录映射到容器内部，从而运行调试构建后的代码。
+
+`/opt/.env`和`/opt/package.json`两个文件也可以通过数据卷映射。文件映射后，通过修改外部文件可以直接更改容器内部的配置文件。重新运行容器即可载入配置。（不过使用`--rm`参数，每次运行时创建，不运行时删除在一些时候会更方便）。
