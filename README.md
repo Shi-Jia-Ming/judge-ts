@@ -64,24 +64,23 @@ docker run -it --rm --privileged --shm-size=256m -p 5050:5050 --name=go-judge cr
 
 ```txt
 ├── .env.deploy         # 生产环境下的 .env 文件
-├── Dockerfile.local    # Dockerfile 文件
-├── go-judge.conf       # supervisor 的服务注册配置文件
 ├── package.json        # 项目的依赖配置文件
+├── Dockerfile.local    # Dockerfile 文件
 ```
 
-其中，`go-judge.conf`文件和`Dockerfile.local`文件不需要更改，剩下两个文件可以根据调试的需要更改。更改之后需要重新构建镜像。构建镜像的命令如下：
+其中，`Dockerfile.local`文件不需要更改，剩下两个文件可以根据调试的需要更改。`package.json`文件用来指定项目需要的依赖项，一般情况下和原项目保持一致。如果更改该文件，需要重新运行容器。每次重新运行容器时都会重新安装依赖。如果依赖有变动在运行容器时会自动更改。`.env.deploy`文件的改动会同步到容器内部，更改后无需重新运行容器即可生效。
+
+构建镜像的命令如下：
 
 ```bash
-# 构建需要在 deploy 目录中进行
-cd deploy
-
-docker build -t judge-local -f Dockerfile.local .
+# 镜像构建的上下文目录为 deploy
+docker build -t judge-local -f .\\deploy\\Dockerfile.local .\\deploy
 ```
 
 创建并运行容器的命令如下：
 
 ```bash
-docker run --rm -it --privileged -v ./dist:/dist --name judge-local -p 8000:8000 judge-local
+docker run --rm -it --privileged -v .\\dist:/opt/dist -v .\\deploy\\.env.deploy:/opt/.env -v .\\deploy\\package.json:/opt/package.json --name judge-local -p 8000:8000 judge-local
 ```
 
 该命令创建的容器在停止后会被删除。`-it`参数允许容器运行一个交互式的终端会话，用户可以在自己的终端中运行容器内部的交互式`bash`终端。调试结束后，执行`Ctrl + C`退出会话，容器自动被删除。
