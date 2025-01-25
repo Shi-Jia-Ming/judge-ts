@@ -6,6 +6,7 @@ import {
   JudgeResult,
   ProgressMessage, SubtaskResult, SyncResponseMessage, TaskResult,
 } from "../../types/client";
+import Logger from "../../utils/logger";
 import {JudgeFactory} from "./judge.factory";
 import JudgeInterface from "./language/judge.interface";
 
@@ -32,6 +33,8 @@ export class Judge {
   public fileList: Map<string, string> = new Map();
   // GoJudge 评测机句柄
   private judger: JudgeInterface | null = null;
+
+  private readonly logger = new Logger("judge");
 
   constructor(language: string, id: number) {
     this.language = language;
@@ -116,9 +119,7 @@ export class Judge {
     if (this.config.type == "default") {
       this.subTask = this.config.subtasks;
     } else {
-      if (process.env.RUNNING_LEVEL === "debug") {
-        console.error("[judge]", "unsupported config type");
-      }
+      this.logger.error("unsupported config type while configuring");
     }
   }
 
@@ -130,12 +131,13 @@ export class Judge {
    */
   public receive = (task: AssignMessage): boolean => {
     // 设置 GoJudge 评测机句柄
-    this.judger = JudgeFactory.build(task.language);
     if (task.language === this.language && !this.occupied) {
       this.occupied = true;
       this.judgeResult.status = "Judging";
       this.judgeStatus.type = "progress";
       this.judgeStatus.id = task.id;
+
+      this.judger = JudgeFactory.build(task.language);
       return true;
     }
     return false;
@@ -225,15 +227,12 @@ export class Judge {
         memory: result.memory,
       };
 
-      
-      if (process.env.RUNNING_LEVEL === "verbose") {
-        console.log("time used:", result.runtime, "us");
-        console.log("memory used:", result.memory, "kb");
-        if (this.config?.type === "default" && this.config?.time) 
-          console.log("time limit:", this.config.time, "us");
-        if (this.config?.type === "default" && this.config?.memory)
-          console.log("memory limit:", Math.trunc(this.config.memory / 1000), "kb");
-      }
+      this.logger.debug("time used:", result.runtime, "us");
+      this.logger.debug("memory used:", result.memory, "kb");
+      if (this.config?.type === "default" && this.config?.time) 
+        this.logger.debug("time limit:", this.config.time, "us");
+      if (this.config?.type === "default" && this.config?.memory)
+        this.logger.debug("memory limit:", Math.trunc(this.config.memory / 1000), "kb");
 
       // 检查内存和时间限制
       if (this.config?.type === "default" && this.config?.time && result.runtime > this.config?.time) {
@@ -250,9 +249,7 @@ export class Judge {
         subtaskResult.status = "Runtime Error";
         this.judgeResult.status = "Runtime Error";
       } else if (result.code === 2) {
-        if (process.env.RUNNING_LEVEL === "debug") {
-          console.error("[judge]", "system error while running cases");
-        }
+        this.logger.error("system error while running cases");
         // system error
         caseResult.status = "System Error";
         subtaskResult.status = "System Error";
@@ -272,9 +269,8 @@ export class Judge {
         caseResult.status = "System Error";
         subtaskResult.status = "System Error";
         this.judgeResult.status = "System Error";
-        if (process.env.RUNNING_LEVEL === "debug") {
-          console.error("[judge]", "unknown error while running cases");
-        }
+
+        this.logger.error("unknown error while running cases");
       }
 
       subtaskResult.tasks.push(caseResult);

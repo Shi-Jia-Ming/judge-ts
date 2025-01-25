@@ -5,9 +5,12 @@ import { FileError, JudgeRequest, Result } from "../../../types/server";
 import axios from "axios";
 import JudgeInterface from "./judge.interface";
 import { v4 as uuidv4 } from 'uuid';
+import Logger from "../../../utils/logger";
 
 export class JudgeC implements JudgeInterface {
   fileName: string = "";
+
+  private readonly logger: Logger = new Logger("judge c");
 
   public constructor() {
     this.fileName = uuidv4();
@@ -69,9 +72,8 @@ export class JudgeC implements JudgeInterface {
         }
       })
       .catch((error) => {
-        if (process.env.RUNNING_LEVEL === "debug") {
-          console.error("[judge c]", "bad request in compile:", error.message);
-        }
+        this.logger.error("bad request in compile:", error.message);
+
         output = "";
         code = 2;
       });
@@ -140,10 +142,11 @@ export class JudgeC implements JudgeInterface {
           code = 1;
         } else if (response.data[0].fileError !== undefined) {
           // system error
-          console.error("System error: ");
+          this.logger.error("system error: ");
           response.data[0].fileError.forEach((error: FileError) => {
-            console.error(error.message);
+            this.logger.error(error.message);
           });
+
           code = 2;
         } else if (response.data[0].exitStatus === 0) {
           // run success
@@ -151,14 +154,12 @@ export class JudgeC implements JudgeInterface {
           runtime = response.data[0].time;
           memory = response.data[0].memory;
         } else {
-          console.error("Unknown error!");
+          this.logger.error("unknown error!");
           code = 2;
         }
       })
       .catch((error) => {
-        if (process.env.RUNNING_LEVEL === "debug") {
-          console.error("[judge c]", "bad request in execute:", error.message);
-        }
+        this.logger.error("bad request in execute:", error.message);
         output = "";
         code = 2;
       });
