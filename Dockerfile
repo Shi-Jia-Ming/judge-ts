@@ -12,7 +12,13 @@ RUN git clone -b dev-sjm https://github.com/hitwhoj/judge-ts.git
 
 RUN cd judge-ts && npm install && npm run build
 
-COPY ./go-judge.conf /etc/supervisor/conf.d/go-judge.conf
+RUN echo "[program:go-judge]" >> /etc/supervisor/conf.d/go-judge.conf
+RUN echo "command=/opt/go-judge -http-addr 0.0.0.0:5050" >> /etc/supervisor/conf.d/go-judge.conf
+RUN echo "autostart=true" >> /etc/supervisor/conf.d/go-judge.conf
+RUN echo "autorestart=true" >> /etc/supervisor/conf.d/go-judge.conf
+RUN echo "stderr_logfile=/var/log/go-judge.err.log" >> /etc/supervisor/conf.d/go-judge.conf
+RUN echo "stdout_logfile=/var/log/go-judge.out.log" >> /etc/supervisor/conf.d/go-judge.conf
+
 COPY ./.env /opt/.env
 
 EXPOSE 5050/tcp 8000/tcp
