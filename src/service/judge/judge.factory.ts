@@ -1,9 +1,7 @@
-import {AssignMessage, DispatchTask} from "../../types/client";
 import {JudgeCpp} from "./language/judge.cpp";
 import {JudgeC} from "./language/judge.c";
 import {JudgePython} from "./language/judge.python";
 import {JudgeJava} from "./language/judge.java";
-import axios from "axios";
 import JudgeInterface from "./language/judge.interface";
 
 export class JudgeFactory {
@@ -19,10 +17,5 @@ export class JudgeFactory {
     } else {
       return new JudgeC();
     }
-  }
-
-  // TODO 直接在这里实现是不是不太好
-  static async deleteFile(execFile: string) {
-    const _ = await axios.delete(`http://localhost:5050/file/${execFile}`);
   }
 }

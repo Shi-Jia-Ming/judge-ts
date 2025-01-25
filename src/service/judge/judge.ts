@@ -34,7 +34,7 @@ export class Judge {
   // GoJudge 评测机句柄
   private judger: JudgeInterface | null = null;
 
-  private readonly logger = new Logger("judge");
+  private readonly logger: Logger = new Logger("judge");
 
   constructor(language: string, id: number) {
     this.language = language;
@@ -108,7 +108,7 @@ export class Judge {
     this.judgeStatus.id = -1;
 
     // 删除 GoJudge 内的文件
-    JudgeFactory.deleteFile(this.execFile);
+    this.judger?.delete(this.execFile);
   }
 
   /**

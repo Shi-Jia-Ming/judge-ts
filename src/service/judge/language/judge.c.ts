@@ -171,4 +171,8 @@ export class JudgeC implements JudgeInterface {
       memory: Math.round(memory / 1024),
     };
   };
+
+  public delete = async (execFile: string): Promise<void> => {
+    const _ = await axios.delete(`http://localhost:5050/file/${execFile}`);
+  };
 }

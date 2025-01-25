@@ -2,25 +2,18 @@ import {DispatchTask} from "../../../types/client";
 import {FileError, JudgeRequest, Result} from "../../../types/server";
 import axios from "axios";
 import JudgeInterface from "./judge.interface";
-import { v4 as uuidv4 } from 'uuid';
 import Logger from "../../../utils/logger";
 
 export class JudgePython implements JudgeInterface {
   private code: string = "";
-  fileName: string = "";
 
   private readonly logger: Logger = new Logger("judge python");
-
-  public constructor() {
-    this.fileName = uuidv4();
-  }
-
 
   // 准备并运行 Python 代码
   public judge = async (task: DispatchTask): Promise<{ code: number, message: string, fileId: string }> => {
     this.code = task.code;
     return {code: 0, message: "Python Running!", fileId: "Python"};
-  }
+  };
 
   // 运行 Python 代码
   public exec = async (input: string, _execFileId: string): Promise<{
@@ -89,5 +82,9 @@ export class JudgePython implements JudgeInterface {
     });
 
     return {code: code, output: output, runtime: Math.round(runtime / 1000), memory: Math.round(memory / 1024)};
-  }
+  };
+
+  public delete = async (execFile: string): Promise<void> => {
+    const _ = await axios.delete(`http://localhost:5050/file/${execFile}`);
+  };
 }

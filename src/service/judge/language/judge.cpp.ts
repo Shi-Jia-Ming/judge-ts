@@ -64,7 +64,7 @@ export class JudgeCpp implements JudgeInterface {
     });
 
     return {code: code, message: output, fileId: fileId};
-  }
+  };
 
   public exec = async (input: string, execFileId: string): Promise<{
     code: number,
@@ -135,5 +135,9 @@ export class JudgeCpp implements JudgeInterface {
     });
 
     return {code: code, output: output, runtime: Math.round(runtime / 1000 / 1000), memory: Math.round(memory / 1024)};
-  }
+  };
+
+  public delete = async (execFile: string): Promise<void> => {
+    const _ = await axios.delete(`http://localhost:5050/file/${execFile}`);
+  };
 }
