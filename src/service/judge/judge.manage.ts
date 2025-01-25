@@ -17,9 +17,6 @@ export class JudgeManager {
   // 评测机实例列表，长度为 systemStatus.cpus。每一个评测机实例为一个线程
   private judgeInstanceList: Judge[] = [];
 
-  // 文件列表，用于存放从客户端获取的文件内容
-  private fileList: Map<string, string> = new Map();
-
   private readonly logger: Logger = new Logger("judge manager");
 
   constructor(response: Judge2WebManager, fileManager: FileManager) {
@@ -32,7 +29,11 @@ export class JudgeManager {
     }
   }
 
-  // 存储文件
+  /**
+   * 向目标评测机分发文件
+   * @param file 获取的文件
+   * @param instanceId 请求该文件的评测机实例id
+   */
   public saveFile = (file: SyncResponseMessage, instanceId: number) => {
     // this.fileList.set(file.uuid, Buffer.from(file.data, "base64").toString());
     const instance = this.judgeInstanceList.find((instance) => instance.id === instanceId);
@@ -41,7 +42,11 @@ export class JudgeManager {
     }
   }
 
-  // 接收评测任务
+  /**
+   * 接收评测任务
+   * @param task 评测任务
+   * @returns 是否成功接收，如果评测机实例被占用或者不支持该编程语言，返回 false
+   */
   public receiveTask = (task: AssignMessage): boolean => {
     // 判断编程语言
     // 判断资源占用情况
