@@ -3,6 +3,7 @@ import systemStatus from "../../config/system.status";
 import {Judge2WebManager} from "../response";
 import {Judge} from "./judge";
 import FileManager from "../file.manage";
+import Logger from "../../utils/logger";
 
 /**
  * 评测机实例管理类
@@ -16,8 +17,7 @@ export class JudgeManager {
   // 评测机实例列表，长度为 systemStatus.cpus。每一个评测机实例为一个线程
   private judgeInstanceList: Judge[] = [];
 
-  // 文件列表，用于存放从客户端获取的文件内容
-  private fileList: Map<string, string> = new Map();
+  private readonly logger: Logger = new Logger("judge manager");
 
   constructor(response: Judge2WebManager, fileManager: FileManager) {
     this.response = response;
@@ -29,7 +29,11 @@ export class JudgeManager {
     }
   }
 
-  // 存储文件
+  /**
+   * 向目标评测机分发文件
+   * @param file 获取的文件
+   * @param instanceId 请求该文件的评测机实例id
+   */
   public saveFile = (file: SyncResponseMessage, instanceId: number) => {
     // this.fileList.set(file.uuid, Buffer.from(file.data, "base64").toString());
     const instance = this.judgeInstanceList.find((instance) => instance.id === instanceId);
@@ -38,7 +42,11 @@ export class JudgeManager {
     }
   }
 
-  // 接收评测任务
+  /**
+   * 接收评测任务
+   * @param task 评测任务
+   * @returns 是否成功接收，如果评测机实例被占用或者不支持该编程语言，返回 false
+   */
   public receiveTask = (task: AssignMessage): boolean => {
     // 判断编程语言
     // 判断资源占用情况
@@ -52,6 +60,7 @@ export class JudgeManager {
     // 接取任务
     for (const judgeInstance of this.judgeInstanceList.filter((judgeInstance) => !judgeInstance.isOccupied())) {
       if (judgeInstance.receive(task)) {
+        this.logger.info(`assign task ${task.id} to judge instance ${judgeInstance.id}`);
         // 占用的评测机实例增加
         systemStatus.occupied++;
         // Pending -> Judging
@@ -59,9 +68,8 @@ export class JudgeManager {
         this.response.dispatchTask("accept", task.id);
         // 不阻塞主进程的执行
         this.judge(task, judgeInstance).catch((_) => {
-          if (process.env.RUNNING_LEVEL === "debug") {
-            console.error("[judge manager]", "judge error");
-          }
+          this.logger.error(`judge task ${task.id} error`);
+
           this.response.judgeSync({
             type: "finish",
             id: task.id,
@@ -75,24 +83,19 @@ export class JudgeManager {
           })
         });
 
-        if (process.env.RUNNING_LEVEL === "debug") {
-          console.log("[judge manager]", "receive task", task.id);
-        }
         return true;
       }
     }
-    if (process.env.RUNNING_LEVEL === "debug") {
-      console.log("[judge manager]", "no available judge instance");
-    }
+
+    this.logger.info(`no available judge instance`);
+
     this.response.dispatchTask("reject", task.id);
     return false;
   }
 
   // 开始评测
   private judge = async (task: AssignMessage, judgeInstance: Judge) => {
-    if (process.env.RUNNING_LEVEL === "debug") {
-      console.log("[judge manager]", "start judge", task.id);
-    }
+    this.logger.info(`start judge task ${task.id}`);
     // Judging -> Compiling
     this.response.judgeSync(judgeInstance.getJudgeStatus());
 
@@ -121,7 +124,6 @@ export class JudgeManager {
           judgeInstance.configure(configJson);
         }
 
-
         if (judgeInstance.isConfigured()) {
           clearInterval(timer);
           resolve(null);
@@ -139,9 +141,8 @@ export class JudgeManager {
       const timer = setInterval(async () => {
         // TODO 错误检测的优化
         await judgeInstance.run(judgeInstance.fileList, task).catch((e) => {
-          if (process.env.RUNNING_LEVEL === "debug") {
-            console.error("[judge manager]", "run error", e);
-          }
+          this.logger.error('execute error', e);
+
           this.response.judgeSync({
             type: "finish",
             id: task.id,
@@ -155,9 +156,7 @@ export class JudgeManager {
           })
         });
         if (judgeInstance.isAllSubTaskFinished()) {
-          if (process.env.RUNNNING_LEVEL === "debug") {
-            console.log("[judge manager]", "all subtask finished");
-          }
+          this.logger.info(`all subtask finished`);
           clearInterval(timer);
           resolve(null);      // 执行 then
         }

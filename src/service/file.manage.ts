@@ -1,4 +1,5 @@
 import { SyncResponseMessage } from "../types/client";
+import Logger from "../utils/logger";
 import { JudgeManager } from "./judge/judge.manage";
 import { Judge2WebManager } from "./response";
 
@@ -12,14 +13,14 @@ export default class FileManager {
 
   private response: Judge2WebManager;
 
+  private readonly logger = new Logger("file manager");
+
   constructor(response: Judge2WebManager) {
     this.response = response;
   }
 
   public requestFile = (uuid: string, instanceId: number) => {
-    if (process.env.RUNNING_LEVEL === "debug") {
-      console.log("[file manager]", "request file", uuid, "for instance", instanceId);
-    }
+    this.logger.info("request file", uuid, "for instance", instanceId);
     this.response.fileSync(uuid);
     this.fileList.push({ uuid, instanceId });
   }
@@ -28,11 +29,10 @@ export default class FileManager {
     const waiting = this.fileList.find((waiting) => waiting.uuid === file.uuid);
     if (waiting) {
       judgeManager.saveFile(file, waiting.instanceId);
+      this.logger.info("received file", file.uuid, "for instance", waiting.instanceId);
       this.fileList.splice(this.fileList.indexOf(waiting), 1);
     } else {
-      if (process.env.RUNNING_LEVEL === "debug") {
-        console.error("[file manager]", "no judge instance is waiting for this file");
-      }
+      this.logger.error("no judge instance is waiting for this file");
     }
   }
 }

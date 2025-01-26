@@ -1,15 +1,22 @@
 import {DispatchTask} from "../../../types/client";
 import {FileError, JudgeRequest, Result} from "../../../types/server";
 import axios from "axios";
+import JudgeInterface from "./judge.interface";
+import Logger from "../../../utils/logger";
 
-export class JudgePython {
+export class JudgePython implements JudgeInterface {
+  private code: string = "";
+
+  private readonly logger: Logger = new Logger("judge python");
+
   // 准备并运行 Python 代码
-  public static judge = async (): Promise<{ code: number, message: string, fileId: string }> => {
+  public judge = async (task: DispatchTask): Promise<{ code: number, message: string, fileId: string }> => {
+    this.code = task.code;
     return {code: 0, message: "Python Running!", fileId: "Python"};
-  }
+  };
 
   // 运行 Python 代码
-  public static exec = async (input: string, task: DispatchTask): Promise<{
+  public exec = async (input: string, _execFileId: string): Promise<{
     code: number,
     output: string,
     runtime: number,
@@ -33,7 +40,7 @@ export class JudgePython {
         procLimit: 50,
         copyIn: {
           "a.py": {
-            content: task.code
+            content: this.code
           }
         }
       }]
@@ -54,9 +61,9 @@ export class JudgePython {
         code = 1;
       } else if (response.data[0].fileError !== undefined) {
         // 系统错误
-        console.error("System error: ");
+        this.logger.error("system error: ");
         response.data[0].fileError.forEach((error: FileError) => {
-          console.error(error.message);
+          this.logger.error(error.message);
         });
         code = 2;
       } else if (response.data[0].exitStatus === 0) {
@@ -65,17 +72,19 @@ export class JudgePython {
         runtime = response.data[0].time;
         memory = response.data[0].memory;
       } else {
-        console.error("Unknown error!");
+        this.logger.error("unknown error!");
         code = 2;
       }
     }).catch((error) => {
-      if (process.env.RUNNING_LEVEL === "debug") {
-        console.error("[judge python]", "bad request in execute:", error.message);
-      }
+      this.logger.error("bad request in execute:", error.message);
       output = "";
       code = 2;
     });
 
     return {code: code, output: output, runtime: Math.round(runtime / 1000), memory: Math.round(memory / 1024)};
-  }
+  };
+
+  public delete = async (execFile: string): Promise<void> => {
+    const _ = await axios.delete(`http://localhost:5050/file/${execFile}`);
+  };
 }

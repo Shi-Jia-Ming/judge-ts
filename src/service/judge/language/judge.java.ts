@@ -1,9 +1,20 @@
 import {DispatchTask} from "../../../types/client";
 import {FileError, JudgeRequest, Result} from "../../../types/server";
 import axios from "axios";
+import JudgeInterface from "./judge.interface";
+import { v4 as uuidv4 } from 'uuid';
+import Logger from "../../../utils/logger";
 
-export class JudgeJava {
-  public static judge = async (task: DispatchTask): Promise<{ code: number, message: string, fileId: string }> => {
+export class JudgeJava implements JudgeInterface {
+  fileName: string = "";
+
+  private readonly logger: Logger = new Logger("judge java");
+
+  public constructor() {
+    this.fileName = uuidv4();
+  }
+  
+  public judge = async (task: DispatchTask): Promise<{ code: number, message: string, fileId: string }> => {
     const judgeTask: JudgeRequest = {
       cmd: [{
         args: ["/usr/bin/javac", "Main.java"], // Java的文件由主类，这里使用Main
@@ -40,17 +51,15 @@ export class JudgeJava {
         code = 1;
       } else fileId = response.data[0].fileIds!["Main.class"];
     }).catch((error) => {
-      if (process.env.RUNNING_LEVEL === "debug") {
-        console.error("[judge java]", "bad request in compile:", error.message);
-      }
+      this.logger.error("bad request in compile:", error.message);
       output = "";
       code = 2;
     });
 
     return {code: code, message: output, fileId: fileId};
-  }
+  };
 
-  public static exec = async (input: string, execFileId: string): Promise<{
+  public exec = async (input: string, execFileId: string): Promise<{
     code: number,
     output: string,
     runtime: number,
@@ -97,10 +106,10 @@ export class JudgeJava {
         code = 1;
       } else if (response.data[0].fileError !== undefined) {
         // system error
-        console.error("System error: ");
+        this.logger.error("system error: ");
         response.data[0].fileError.forEach((error: FileError) => {
-          console.error(error.message);
-        })
+          this.logger.error(error.message);
+        });
         code = 2;
       } else if (response.data[0].exitStatus === 0) {
         // run success
@@ -109,17 +118,19 @@ export class JudgeJava {
         memory = response.data[0].memory;
       } else {
         output = "";
-        console.error("Unknown error!");
+        this.logger.error("unknown error!");
         code = 2;
       }
     }).catch((error) => {
-      if (process.env.RUNNING_LEVEL === "debug") {
-        console.error("[judge java]", "bad request in execute:", error.message);
-      }
+      this.logger.error("bad request in execute:", error.message);
       output = "";
       code = 2;
     });
 
     return {code: code, output: output, runtime: Math.round(runtime / 1000), memory: Math.round(memory / 1024)};
-  }
+  };
+
+  public delete = async (execFile: string): Promise<void> => {
+    const _ = await axios.delete(`http://localhost:5050/file/${execFile}`);
+  };
 }
