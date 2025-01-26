@@ -1,0 +1,25 @@
+version: '3.9'
+services:
+  judge1-ts:
+    image: lengtouzai/judge-ts:1.0.0
+    ports:
+      - "1145:8000"
+    privileged: true
+
+  judge2-ts:
+    image: lengtouzai/judge-ts:1.0.0
+    ports:
+      - "1146:8000"
+    privileged: true
+
+  judge3-ts:
+    image: lengtouzai/judge-ts:1.0.0
+    ports:
+      - "1147:8000"
+    privileged: true
+
+  judge4-ts:
+    image: lengtouzai/judge-ts:1.0.0
+    ports:
+      - "1148:8000"
+    privileged: true
