@@ -6,7 +6,6 @@
 
 ### 目录结构
 ```
-├── deploy                          # 快速部署目录
 ├── src
 │   ├── index.ts                    # 项目入口文件
 │   ├── config                      # 配置文件目录
@@ -60,31 +59,32 @@ docker run -it --rm --privileged --shm-size=256m -p 5050:5050 --name=go-judge cr
 
 ### 快速部署
 
-项目增加了基于`Docker`的快速部署功能，可以不下载GoJudge即可在本地部署，方便代码调试。相关的文件在`deploy`目录中。相关文件的解释如下：
+项目增加了基于`Docker`的快速部署功能，可以不下载GoJudge即可在本地部署，方便代码调试。
 
-```txt
-├── .env.deploy         # 生产环境下的 .env 文件
-├── package.json        # 项目的依赖配置文件
-├── Dockerfile.local    # Dockerfile 文件
-```
-
-其中，`Dockerfile.local`文件不需要更改，剩下两个文件可以根据调试的需要更改。`package.json`文件用来指定项目需要的依赖项，一般情况下和原项目保持一致。如果更改该文件，需要重新运行容器。每次重新运行容器时都会重新安装依赖。如果依赖有变动在运行容器时会自动更改。`.env.deploy`文件的改动会同步到容器内部，更改后无需重新运行容器即可生效。
-
-构建镜像的命令如下：
+项目根目录的`Dockerfile.local`文件为本地镜像构建文件，可以用该文件在本地构建镜像使用，构建镜像的命令如下：
 
 ```bash
-# 镜像构建的上下文目录为 deploy
-docker build -t judge-local -f .\\deploy\\Dockerfile.local .\\deploy
+docker build -t judge-local -f Dockerfile.local .
 ```
 
-创建并运行容器的命令如下，如果只需要运行容器，则无需构建镜像，可以直接从Docker Hub中拉取（`lengtouzai/judge-local`）：
+创建并运行容器的命令如下，如果只需要运行容器，则无需构建镜像，可以直接从Docker Hub中拉取([`lengtouzai/judge-local`](https://hub.docker.com/repository/docker/lengtouzai/judge-local)，当前最新版本为[`v1.0.1`](https://hub.docker.com/repository/docker/lengtouzai/judge-local/tags/1.0.1/sha256-c63fc5ba8b7c2bf1a8d88a5a12b437fb5f937b9cb66cf42f15d57de6156fbebf)）：
 
 ```bash
-docker run --rm -it --privileged -v .\\dist:/opt/dist -v .\\deploy\\.env.deploy:/opt/.env -v .\\deploy\\package.json:/opt/package.json --name judge-local -p 8000:8000 lengtouzai/judge-local
+docker run --rm -it --privileged -v dist:/opt/dist -v package.json:/opt/package.json --name judge-local -p 8000:8000 lengtouzai/judge-local:1.0.1
 ```
 
 该命令创建的容器在停止后会被删除。`-it`参数允许容器运行一个交互式的终端会话，用户可以在自己的终端中运行容器内部的交互式`bash`终端。调试结束后，执行`Ctrl + C`退出会话，容器自动被删除。
 
-容器可以配置三个数据卷，其中有一个必须配置，其他两个可以选择性配置。`/opt/dist`目录为项目构建后的目录，需要从外部映射。上述指令中将本地构建的`dist`目录映射到容器内部，从而运行调试构建后的代码。
+容器可以配置两个数据卷：
 
-`/opt/.env`和`/opt/package.json`两个文件也可以通过数据卷映射。文件映射后，通过修改外部文件可以直接更改容器内部的配置文件。重新运行容器即可载入配置。（不过使用`--rm`参数，每次运行时创建，不运行时删除在一些时候会更方便）。
+- `/opt/dist`：项目构建后的目录，需要从外部映射。上述指令中将本地构建的`dist`目录映射到容器内部，从而运行调试构建后的代码。
+- `/opt/package.json`：项目需要的依赖，需要从外部映射。建议直接映射项目根目录的`package.json`文件。如果文件或依赖缺失，会导致容器内部项目运行报错。
+
+容器还可以配置一个环境变量：
+
+- `RUNNING_LEVEL`：项目的日志等级，对应了`.env.example`文件中的`RUNNING_LEVEL`，可以设置为：`silent`、`debug`、`info`、`warn`。默认值为`info`。
+
+容器内部有两个服务端口：
+
+- 8000端口为JudgeTS服务运行的端口，该端口映射直接用于连接HITWHOJ。
+- 5050端口为GoJudge服务运行的端口，该端口映射后可以用于直接调试GoJudge服务或查看GoJudge评测机状态。

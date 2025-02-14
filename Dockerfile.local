@@ -1,5 +1,7 @@
 FROM criyle/go-judge
 
+ENV RUNNING_LEVEL=info
+
 WORKDIR /opt
 
 RUN apt update && apt install -y curl sudo gcc g++ supervisor
@@ -13,9 +15,7 @@ RUN echo "autorestart=true" >> /etc/supervisor/conf.d/go-judge.conf
 RUN echo "stderr_logfile=/var/log/go-judge.err.log" >> /etc/supervisor/conf.d/go-judge.conf
 RUN echo "stdout_logfile=/var/log/go-judge.out.log" >> /etc/supervisor/conf.d/go-judge.conf
 
-COPY .env.deploy /opt/.env
-
-COPY package.json /opt/package.json
+RUN echo "RUNNING_LEVEL=${RUNNING_LEVEL}" > /opt/.env
 
 RUN npm install
 
